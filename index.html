@@ -1175,7 +1175,7 @@
      const start = (this.currentPage - 1) * this.pageSize;
      const pageItems = items.slice(start, start + this.pageSize);
      grid.innerHTML = pageItems.map(item => {
-       const img = item.image ? `<img src="${this.escape(item.image)}" alt="" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block;">` : `<div class="no-img" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">[ NO IMAGE ]<br><small>${(item.category||'UNKNOWN').toUpperCase()}</small></div>`;
+       const img = item.image ? `<img src="${this.escape(item.image)}" alt="" onerror="this.style.display='none';this.parentElement.querySelector('.no-img-fallback').style.display='flex';" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block;"><div class="no-img no-img-fallback" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center;">[ NO IMAGE ]<br><small>${(item.category||'UNKNOWN').toUpperCase()}</small></div>` : `<div class="no-img" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">[ NO IMAGE ]<br><small>${(item.category||'UNKNOWN').toUpperCase()}</small></div>`;
        const featuredClass = item.featured ? 'card-featured' : '';
        const featuredBadge = item.featured ? '<span class="tag-featured">FEATURED</span>' : '';
        const isFav = this.favorites.has(item.id);
@@ -1631,7 +1631,14 @@
      const email = document.getElementById('pEmail').value.trim();
      const desc = document.getElementById('pDesc').value.trim();
      const imageInput = document.getElementById('pImage').value.trim();
-     const images = imageInput ? imageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+     let images = imageInput ? imageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+     const fileInput = document.getElementById('pImageFile');
+     if (images.length === 0 && fileInput.files.length > 0) {
+       this.toast('Uploading selected images...', 'info');
+       await this.uploadImage();
+       const newImageInput = document.getElementById('pImage').value.trim();
+       images = newImageInput ? newImageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+     }
      if (!title || !desc || !location) { this.toast('Please fill in Title, Location, and Description.', 'error'); return; }
      if (price < 0) { this.toast('Price cannot be negative.', 'error'); return; }
      if (this.containsBanned({content: desc, tags: [['title', title]]})) { this.toast('Listing contains disallowed content.', 'error'); return; }
@@ -1756,6 +1763,7 @@
          const paramKey = `${oldEv.kind}:${oldEv.pubkey}:${dTag}`;
          if (this.paramIndex.get(paramKey) === id) this.paramIndex.delete(paramKey);
        }
+       this.events.delete(id);
      }
      const ev = { kind: 5, created_at: Math.floor(Date.now()/1000), tags: [['e', id]], content: 'Deleted by author', pubkey: this.currentPubkey };
      try { const signed = await this.signEvent(ev); this.publishToRelays(signed); this.events.delete(id); try { await db.events.delete(id); } catch(e) {} this.goHome(); }
@@ -2018,6 +2026,17 @@
        case 'nostr-logout': this.nostrLogout(); break;
        case 'copy-npub': this.copyNpub(npub); break;
        case 'toggle-relay-expand': this.toggleRelayExpand(); break;
+       case 'set-category':
+         this.currentCategory = el.dataset.cat;
+         this.currentPage = 1;
+         this.currentView = 'browse';
+         this.currentSeller = null;
+         document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+         el.classList.add('active');
+         document.querySelector('.sidebar-left').classList.remove('open');
+         this.updateBrowseHash();
+         this.render();
+         break;
        case 'show-my-listings': this.showMyListings(); break;
        case 'show-favorites': this.showFavorites(); break;
        case 'show-data-page': location.hash = '#/data'; break;
@@ -2054,7 +2073,7 @@
      const action = el.dataset.action;
      switch(action) {
        case 'category-change': this.onCategoryChange(); break;
-       case 'filter-change': this.currentPage = 1; this.render(); break;
+       case 'filter-change': this.currentPage = 1; this.updateBrowseHash(); this.render(); break;
        case 'set-sort': this.setSort(el.value); break;
        case 'set-page-size': this.setPageSize(el.value); break;
        case 'import-data': this.importData(el); break;

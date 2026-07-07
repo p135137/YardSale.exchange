@@ -500,7 +500,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
 
   <!-- BETA BANNER -->
   <div style="background:#ff00ff;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:12px;">
-    🚧 BETA — Use at your own risk. 🚧
+    🚧 BETA — Local classifieds powered by Nostr. Use at your own risk. 🚧
   </div>
 
   <div class="title-bar">
@@ -842,7 +842,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
   const app = {
     relays: [], relayConns: {}, events: new Map(), dms: [],
     currentCategory: 'all', currentView: 'browse', btcMode: false, darkMode: false,
-    satsRate: 2500, currentPubkey: null, powDifficulty: 12, eoseCount: 0, btcpayPoll: null,
+    satsRate: 2500, currentPubkey: null, powDifficulty: 0, eoseCount: 0, btcpayPoll: null,
     validCategories: ['for sale','housing','jobs','vehicles','services','community','free stuff'],
     pageSize: 8, currentPage: 1, renderDebounce: null, isPublishing: false,
     relayExpanded: false, favorites: new Set(),
@@ -944,6 +944,16 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
 
     runPow(template, difficulty, onProgress) {
       return new Promise((resolve, reject) => {
+        let settled = false;
+        let worker;
+        const timer = setTimeout(() => {
+          if (!settled) {
+            settled = true;
+            try { worker.terminate(); } catch(e) {}
+            reject(new Error('PoW mining timed out (worker did not respond)'));
+          }
+        }, 35000);
+
         const code = `
           import * as NostrTools from 'https://esm.sh/nostr-tools@2.7.1';
           function getPow(id) {
@@ -986,12 +996,44 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           };
         `;
         const blob = new Blob([code], { type: 'text/javascript' });
-        const worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+        try {
+          worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+        } catch(e) {
+          clearTimeout(timer);
+          reject(new Error('Failed to start PoW worker: ' + e.message));
+          return;
+        }
+
+        worker.onerror = (err) => {
+          if (!settled) {
+            settled = true;
+            clearTimeout(timer);
+            try { worker.terminate(); } catch(e) {}
+            reject(new Error('PoW worker error: ' + (err.message || 'unknown')));
+          }
+        };
+
         worker.onmessage = (e) => {
           if (e.data.type === 'progress') onProgress?.(e.data.nonce);
-          if (e.data.type === 'done') { worker.terminate(); resolve(e.data.event); }
-          if (e.data.type === 'error') { worker.terminate(); reject(new Error(e.data.message)); }
+          if (e.data.type === 'done') {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              try { worker.terminate(); } catch(e) {}
+              resolve(e.data.event);
+            }
+          }
+          if (e.data.type === 'error') {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timer);
+              try { worker.terminate(); } catch(e) {}
+              reject(new Error(e.data.message));
+            }
+          }
         };
+
+        worker.postMessage({ template, difficulty });
       });
     },
 
@@ -1675,7 +1717,15 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
             ...(email ? [['email', email]] : []), ...(images.map(url => ['image', url]))
           ];
           const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: publishedAt, tags, content: desc };
-          const mined = await this.runPow(tpl, this.powDifficulty, (nonce) => { status.textContent = `Mining proof of work... (${nonce})`; });
+          let mined;
+          if (this.powDifficulty <= 0) {
+            mined = JSON.parse(JSON.stringify(tpl));
+            mined.tags = mined.tags.filter(t => t[0] !== 'nonce');
+            mined.tags.push(['nonce', '0']);
+            mined.id = NostrTools.getEventHash(mined);
+          } else {
+            mined = await this.runPow(tpl, this.powDifficulty, (nonce) => { status.textContent = `Mining proof of work... (${nonce})`; });
+          }
           status.textContent = 'Signing...';
           const signed = await this.signEvent(mined);
           this.upsertEvent(signed); this.publishToRelays(signed);

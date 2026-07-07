@@ -1,0 +1,2081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000080">
+<title>YardSale.exchange</title>
+<!--
+SECURITY NOTE: Before going live, replace the esm.sh imports below with
+self-hosted, version-pinned builds. The inline module script and dark-mode
+block will require 'unsafe-inline' in your CSP unless you externalize them.
+-->
+<script>
+(function(){
+  try {
+    if (localStorage.getItem('yardsale_theme') === 'dark') {
+      var s = document.createElement('style');
+      s.id = 'temp-dark';
+      s.textContent = 'body{background:#1a1a1a;color:#e0e0e0;}';
+      document.head.appendChild(s);
+    }
+  } catch(e){}
+})();
+</script>
+<style>
+  :root {
+    --body-bg: #f4f4f0;
+    --bg-gray: #c0c0c0;
+    --win-gray: #dcdcdc;
+    --btn-highlight: #ffffff;
+    --btn-shadow: #808080;
+    --btn-active-bg: #b0b0b0;
+    --main-bg: #ffffff;
+    --text-color: #000000;
+    --sidebar-bg: #f0f0f0;
+    --card-bg: #f4f4f4;
+    --card-hover: #eef;
+    --form-bg: #ffffee;
+    --detail-bg: #fafafa;
+    --footer-bg: #dcdcdc;
+    --footer-text: #333333;
+    --input-bg: #ffffff;
+    --input-text: #000000;
+    --img-bg: #c0c0c0;
+    --meta-color: #444444;
+    --date-color: #666666;
+    --link-blue: #0000ee;
+    --link-purple: #551a8b;
+    --border-dark: #000000;
+    --title-start: #000080;
+    --title-end: #1084d0;
+    --no-img-color: #555555;
+    --ad-bg: #ffffcc;
+  }
+
+  body.dark-mode {
+    --body-bg: #1a1a1a;
+    --bg-gray: #555555;
+    --win-gray: #444444;
+    --btn-highlight: #777777;
+    --btn-shadow: #1a1a1a;
+    --btn-active-bg: #444444;
+    --main-bg: #2b2b2b;
+    --text-color: #e0e0e0;
+    --sidebar-bg: #333333;
+    --card-bg: #3a3a3a;
+    --card-hover: #4a4a4a;
+    --form-bg: #2d2d2d;
+    --detail-bg: #2a2a2a;
+    --footer-bg: #3a3a3a;
+    --footer-text: #cccccc;
+    --input-bg: #1a1a1a;
+    --input-text: #e0e0e0;
+    --img-bg: #555555;
+    --meta-color: #aaaaaa;
+    --date-color: #888888;
+    --link-blue: #6699ff;
+    --link-purple: #bb99ff;
+    --border-dark: #888888;
+    --title-start: #000033;
+    --title-end: #0a3d62;
+    --no-img-color: #aaaaaa;
+    --ad-bg: #555533;
+  }
+
+  * { box-sizing: border-box; }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: "MS Sans Serif", Tahoma, Verdana, Arial, sans-serif;
+    font-size: 13px;
+    background: var(--body-bg);
+    color: var(--text-color);
+  }
+
+  .desktop {
+    max-width: 1400px;
+    margin: 10px auto;
+    background: var(--bg-gray);
+    border: 2px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    padding: 3px;
+    transform: scale(0.95);
+    transform-origin: top center;
+  }
+
+  .title-bar {
+    background: linear-gradient(90deg, var(--title-start), var(--title-end));
+    color: white;
+    padding: 4px 6px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar h1 {
+    margin: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 22px;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .window-btns span {
+    display: inline-block;
+    width: 16px;
+    height: 14px;
+    background: var(--bg-gray);
+    border: 1px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    color: var(--text-color);
+    font-size: 10px;
+    text-align: center;
+    line-height: 12px;
+    margin-left: 2px;
+    cursor: default;
+  }
+
+  .toolbar {
+    background: var(--win-gray);
+    padding: 6px;
+    border-bottom: 2px solid var(--btn-shadow);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  button, select, input[type="text"], input[type="number"], input[type="file"], textarea {
+    font-family: inherit;
+    font-size: 12px;
+    background: var(--bg-gray);
+    border: 2px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    padding: 3px 6px;
+    outline: none;
+    color: var(--text-color);
+  }
+  button:active, button.active {
+    border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow);
+    background: var(--btn-active-bg);
+  }
+  button:disabled {
+    color: #666;
+    cursor: not-allowed;
+  }
+  input[type="text"], input[type="number"], textarea, select {
+    background: var(--input-bg);
+    border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow);
+    color: var(--input-text);
+  }
+  textarea { resize: vertical; }
+
+  a { color: var(--link-blue); text-decoration: underline; }
+  a:visited { color: var(--link-purple); }
+
+  .layout { display: flex; min-height: 420px; }
+  
+  .sidebar {
+    width: 180px;
+    background: var(--sidebar-bg);
+    padding: 10px;
+    flex-shrink: 0;
+  }
+  .sidebar-left {
+    border-right: 2px solid var(--btn-shadow);
+  }
+  .sidebar-right {
+    border-left: 2px solid var(--btn-shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-right .ad {
+    flex: 1;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 300px;
+  }
+  .sidebar h3 {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 16px;
+    margin: 0 0 8px 0;
+    border-bottom: 1px solid var(--border-dark);
+    padding-bottom: 2px;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+  }
+  .sidebar li {
+    margin: 3px 0;
+    cursor: pointer;
+    color: var(--link-blue);
+    text-decoration: underline;
+    font-size: 12px;
+  }
+  .sidebar li:hover { color: #ff0000; }
+  .sidebar li.active { font-weight: bold; color: var(--text-color); text-decoration: none; }
+
+  .ad {
+    margin-top: 20px;
+    border: 1px dashed var(--border-dark);
+    padding: 8px;
+    text-align: center;
+    font-size: 11px;
+    background: var(--ad-bg);
+  }
+
+  .main {
+    flex: 1;
+    background: var(--main-bg);
+    padding: 15px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .section-title {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 24px;
+    margin: 0 0 12px 0;
+    border-bottom: 2px solid var(--border-dark);
+    padding-bottom: 4px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+  }
+  .card {
+    background: var(--card-bg);
+    border: 2px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    position: relative;
+  }
+  .card:hover {
+    background: var(--card-hover);
+    border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow);
+  }
+  .card-featured {
+    border-top: 3px solid #ff00ff !important;
+    background: #fff0ff !important;
+  }
+  body.dark-mode .card-featured {
+    background: #4a004a !important;
+  }
+  .card-img {
+    width: 100%;
+    height: 140px;
+    background: var(--img-bg);
+    border: 1px inset #808080;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+  .card-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    display: block;
+  }
+  .card-img .no-img {
+    font-size: 11px;
+    color: var(--no-img-color);
+    font-family: "Courier New", monospace;
+  }
+  .card-title {
+    font-weight: bold;
+    font-size: 13px;
+    margin: 4px 0;
+    word-break: break-word;
+  }
+  .card-price {
+    color: #006600;
+    font-weight: bold;
+    font-size: 14px;
+    margin: 3px 0;
+  }
+  .card-meta {
+    font-size: 11px;
+    color: var(--meta-color);
+    margin-top: 4px;
+  }
+  .card-date { font-size: 10px; color: var(--date-color); }
+
+  .tag {
+    display: inline-block;
+    background: #ff00ff;
+    color: #fff;
+    padding: 1px 4px;
+    font-size: 10px;
+    margin-left: 4px;
+    text-decoration: none;
+  }
+  .tag-featured {
+    display: inline-block;
+    background: #ff00ff;
+    color: #fff;
+    padding: 1px 4px;
+    font-size: 10px;
+    margin-left: 4px;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .form-panel {
+    background: var(--form-bg);
+    border: 2px solid var(--border-dark);
+    padding: 15px;
+    margin-top: 10px;
+  }
+  .form-panel h2 {
+    margin-top: 0;
+    font-family: "Times New Roman", Times, serif;
+  }
+  .form-table td {
+    padding: 5px 8px 5px 0;
+    vertical-align: top;
+  }
+  .form-table td:first-child {
+    font-weight: bold;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .detail-view {
+    border: 2px solid var(--border-dark);
+    padding: 20px;
+    background: var(--detail-bg);
+  }
+  .detail-view h2 {
+    margin-top: 0;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 28px;
+  }
+  .detail-img {
+    max-width: 100%;
+    max-height: 400px;
+    border: 2px inset #c0c0c0;
+    display: block;
+    margin: 10px 0;
+    image-rendering: pixelated;
+    background: var(--img-bg);
+  }
+
+  .footer {
+    background: var(--footer-bg);
+    border-top: 2px solid var(--btn-shadow);
+    padding: 10px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--footer-text);
+  }
+  .counter {
+    font-family: "Courier New", Courier, monospace;
+    background: #000;
+    color: #0f0;
+    padding: 2px 6px;
+    display: inline-block;
+    margin: 0 4px;
+    letter-spacing: 1px;
+  }
+  .blink {
+    animation: blink 1.2s step-end infinite;
+    color: #cc0000;
+    font-weight: bold;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .btc-active {
+    border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow) !important;
+    background: var(--btn-active-bg) !important;
+  }
+
+  .hidden { display: none !important; }
+
+  #syncBanner {
+    background: var(--ad-bg);
+    border-bottom: 1px solid var(--btn-shadow);
+    padding: 4px 10px;
+    font-size: 12px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #btcpayOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #btcpayBox {
+    background: var(--bg-gray);
+    border: 2px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    padding: 20px;
+    max-width: 420px;
+    width: 90%;
+  }
+
+  .relay-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .relay-table th, .relay-table td {
+    border: 1px solid var(--btn-shadow);
+    padding: 4px 6px;
+    text-align: left;
+  }
+  .relay-table th {
+    background: var(--win-gray);
+  }
+
+  .toast {
+    background: var(--bg-gray);
+    border: 2px solid;
+    border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+    animation: toastIn 0.2s ease;
+    pointer-events: auto;
+  }
+  @keyframes toastIn { from { transform: translateX(20px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+  .toast.error { color: #800000; font-weight: bold; }
+  .toast.success { color: #006600; font-weight: bold; }
+
+  #toastContainer { position: fixed; top: 10px; right: 10px; z-index: 2000; max-width: 280px; pointer-events: none; }
+
+  #mobileMenuBtn {
+    display: none;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.6);
+    color: #fff;
+    font-size: 13px;
+    padding: 1px 4px;
+    cursor: pointer;
+    margin-right: 6px;
+  }
+
+  @media (max-width: 640px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-left: none; border-bottom: 2px solid var(--btn-shadow); padding: 8px; }
+    .sidebar.open { display: block; }
+    .sidebar-right { display: none; }
+    .main { padding: 10px; }
+    .grid { grid-template-columns: 1fr; gap: 10px; }
+    .toolbar { gap: 4px; padding: 4px; }
+    .desktop { margin: 0; border-left: none; border-right: none; border-top: none; transform: none; }
+    .title-bar h1 { font-size: 16px; }
+    input[type="text"], input[type="number"], textarea, select { max-width: 100%; }
+    .window-btns { display: none; }
+    #mobileMenuBtn { display: inline-block; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toastContainer"></div>
+
+<div class="desktop">
+
+  <!-- BETA BANNER -->
+  <div style="background:#ff00ff;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:12px;">
+    🚧 BETA — Use at your own risk. 🚧
+  </div>
+
+  <div class="title-bar">
+    <div style="display:flex;align-items:center;">
+      <button id="mobileMenuBtn" data-action="toggle-sidebar" aria-label="Menu">☰</button>
+      <div>YardSale.exchange - Local classifieds powered by Nostr</div>
+    </div>
+    <div class="window-btns">
+      <span aria-hidden="true">_</span><span aria-hidden="true">□</span><span aria-hidden="true">×</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button data-action="go-home" aria-label="Home">🏠 Home</button>
+    <button data-action="toggle-post-form" aria-label="Post new listing">📝 Post Item</button>
+    <input type="text" id="searchInput" placeholder="Search listings..." style="width:180px;">
+    <button data-action="do-search" aria-label="Search">Search</button>
+    <button id="btcBtn" data-action="toggle-btc" aria-label="Toggle Bitcoin pricing">₿: Off</button>
+    <button id="themeBtn" data-action="toggle-theme" aria-label="Toggle dark mode">🌙 Dark</button>
+    <button data-action="show-messages" aria-label="Messages">✉ Messages</button>
+    <div style="flex:1"></div>
+    <label>Location:
+      <input type="text" id="locationFilter" placeholder="Any city" style="width:120px;" data-action="filter-change">
+    </label>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar sidebar-left">
+      <h3>Categories</h3>
+      <ul id="categoryList">
+        <li class="active" data-cat="all" data-action="set-category">all</li>
+        <li data-cat="for sale" data-action="set-category">for sale</li>
+        <li data-cat="housing" data-action="set-category">housing</li>
+        <li data-cat="jobs" data-action="set-category">jobs</li>
+        <li data-cat="vehicles" data-action="set-category">vehicles</li>
+        <li data-cat="services" data-action="set-category">services</li>
+        <li data-cat="community" data-action="set-category">community</li>
+        <li data-cat="free stuff" data-action="set-category">free stuff</li>
+      </ul>
+
+      <h3>Price Filter</h3>
+      <div style="display:flex;gap:4px;margin-bottom:16px;">
+        <input type="number" id="minPrice" min="0" placeholder="Min" style="width:50%;" data-action="filter-change">
+        <input type="number" id="maxPrice" min="0" placeholder="Max" style="width:50%;" data-action="filter-change">
+      </div>
+
+      <h3>Identity</h3>
+      <div id="nostrIdentity" style="margin-bottom:16px;">
+        <div id="nostrLoggedOut">
+          <button data-action="nostr-login" style="width:100%;margin-bottom:4px;">🔑 Login with Nostr</button>
+          <input type="text" id="importKey" placeholder="Import nsec1... or hex" style="width:100%;margin-bottom:4px;font-size:11px;">
+          <button data-action="import-identity" style="width:100%;margin-bottom:4px;">Import Key</button>
+          <div style="font-size:10px;color:var(--meta-color);text-align:center;margin-bottom:4px;">— or —</div>
+          <button data-action="generate-identity" style="width:100%;margin-bottom:4px;">⚡ Generate Identity</button>
+          <div style="font-size:11px;text-align:center;">
+            <a href="https://nostr.org/" target="_blank">What is nostr?</a>
+          </div>
+        </div>
+        <div id="nostrLoggedIn" style="display:none;">
+          <div id="loggedInContent"></div>
+        </div>
+      </div>
+
+      <h3>Relays</h3>
+      <div id="relayStatus" style="font-size:11px;margin-bottom:4px;color:var(--meta-color);">0/0 connected</div>
+      <div id="relayShortList" style="margin-bottom:4px;"></div>
+      <button id="relayToggleBtn" data-action="toggle-relay-expand" style="width:100%;font-size:11px;margin-bottom:4px;">Show all</button>
+      <div style="font-size:11px;margin-bottom:16px;">
+        <a href="#/relays" style="color:var(--link-blue);">manage relays →</a>
+      </div>
+
+      <h3>My Zone</h3>
+      <ul>
+        <li data-action="show-my-listings">my listings</li>
+        <li data-action="show-favorites">saved</li>
+        <li data-action="show-data-page">my data</li>
+      </ul>
+    </aside>
+
+    <main class="main" id="mainArea">
+      <div id="syncBanner">
+        <span class="blink">●</span> Syncing with Nostr relays...
+      </div>
+
+      <div id="browseView">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--border-dark);padding-bottom:4px;margin-bottom:12px;">
+          <div class="section-title" id="listTitle" style="border:none;margin:0;padding:0;">Recent Listings</div>
+          <select id="mainSortSelect" data-action="set-sort" style="width:160px;">
+            <option value="newest">Newest</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+          </select>
+        </div>
+        <div id="listingsGrid" class="grid"></div>
+        <div id="paginationControls" style="margin-top:15px;"></div>
+      </div>
+
+      <div id="postForm" class="form-panel hidden">
+        <h2>Post a New Listing</h2>
+        <div id="nostrPostNote" style="font-size:12px;color:#800000;margin-bottom:8px;"></div>
+        <div id="formStatus" style="font-size:12px;color:#006600;margin-bottom:8px;min-height:16px;"></div>
+        <table class="form-table">
+          <tr><td>Title:</td><td><input type="text" id="pTitle" style="width:300px;" maxlength="60"></td></tr>
+          <tr><td>Price ($):</td><td><input type="number" id="pPrice" min="0" style="width:100px;" placeholder="0 for free"></td></tr>
+          <tr><td>Category:</td><td>
+            <select id="pCategory" data-action="category-change">
+              <option>for sale</option>
+              <option>housing</option>
+              <option>jobs</option>
+              <option>vehicles</option>
+              <option>services</option>
+              <option>community</option>
+              <option>free stuff</option>
+            </select>
+          </td></tr>
+          <tr><td>Location:</td><td><input type="text" id="pLocation" style="width:200px;" placeholder="City, State"></td></tr>
+          <tr><td>Email:</td><td><input type="text" id="pEmail" style="width:250px;" placeholder="optional contact email"></td></tr>
+          <tr><td>Image URL:</td><td>
+            <input type="text" id="pImage" style="width:220px;" placeholder="https://... (comma-separated for multiple)"> 
+            <span style="font-size:11px;"> or upload:</span>
+            <input type="file" id="pImageFile" accept="image/*" multiple style="width:90px;border:none;background:transparent;">
+            <button type="button" data-action="upload-image">Upload</button>
+          </td></tr>
+          <tr><td></td><td><div id="postImagePreview" style="margin-top:6px;max-width:200px;display:none;"><img style="max-width:100%;border:1px inset #808080;background:var(--img-bg);" src="" alt="Preview"></div></td></tr>
+          <tr><td></td><td style="font-size:11px;">Server: <input type="text" id="blossomServer" value="https://nostr.build" style="width:150px;"></td></tr>
+          <tr><td>Description:</td><td><textarea id="pDesc" rows="5" style="width:100%;max-width:500px;"></textarea></td></tr>
+          <tr><td></td><td>
+            <button id="postSubmitBtn" data-action="submit-post"><b>Submit</b></button>
+            <button data-action="cancel-post">Cancel</button>
+          </td></tr>
+        </table>
+      </div>
+
+      <div id="detailView" class="detail-view hidden"></div>
+
+      <div id="relaysView" class="detail-view hidden">
+        <h2>My Relays</h2>
+        <p style="font-size:12px;">Manage your relay connections. Events are fetched from and published to all connected relays.</p>
+        <table class="relay-table">
+          <thead><tr><th>URL</th><th>Status</th><th>EOSE</th><th>Action</th></tr></thead>
+          <tbody id="relayTableBody"></tbody>
+        </table>
+        <div style="margin-top:12px;">
+          <input type="text" id="newRelayUrl" placeholder="wss://relay.example.com" style="width:220px;">
+          <button data-action="add-relay-from-input">Add Relay</button>
+        </div>
+        <div style="margin-top:12px;">
+          <button data-action="fetch-nip65">Discover from NIP-65</button>
+          <span id="nip65Status" style="font-size:11px;margin-left:8px;"></span>
+        </div>
+        <div id="nip65Section" style="margin-top:12px;display:none;">
+          <h3 style="font-size:14px;">Suggested Relays</h3>
+          <ul id="nip65List" style="font-size:12px;"></ul>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="aboutView" class="detail-view hidden">
+        <h2>About YardSale.exchange</h2>
+        <div style="font-size:14px;line-height:1.6;max-width:700px;">
+          <p>Big platforms like Facebook and Zillow don't help communities thrive—they exploit them. Every listing, message, and profile view is logged, analyzed, and sold. You are not the customer; you are the product.<p>YardSale.exchange runs on a different premise: no cookies, no tracking pixels, no algorithmic feeds, and no corporate overlords monetizing your neighborhood. The site runs entirely in your browser, and your data belongs to you. Built on Nostr, no email required.<p>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="termsView" class="detail-view hidden">
+        <h2>Terms and Conditions</h2>
+        <div style="font-size:14px;line-height:1.6;max-width:700px;">
+          <p><b>1. No Platform Liability</b><br>
+          YardSale.exchange is a decentralized Nostr client. We do not host, control, moderate, or endorse any listings. All content is published by users directly to the Nostr relay network. We are not responsible for transactions, disputes, fraud, or interactions between users.</p>
+          <p><b>2. Payments</b><br>
+          Bitcoin Lightning payments for featured listings and job, housing, or vehicle posts are processed via BTCPay Server. All sales are final and non-refundable. Users are solely responsible for compliance with local tax laws.</p>
+          <p><b>3. Content</b><br>
+          Users are solely responsible for ensuring their listings comply with all applicable local, state, and federal laws regarding the sale of goods, services, housing, and employment. Illegal items, scams, and harassment are not welcome; abuse may result in filtering by relay operators.</p>
+          <p><b>4. Privacy</b><br>
+          We do not use cookies, tracking pixels, analytics, or third-party scripts. Your data is stored locally in your browser and on the Nostr relays you choose to connect to. We have no access to your private keys or messages.</p>
+          <p><b>5. As-Is Software</b><br>
+          This site is provided without warranty of any kind. Use at your own risk.</p>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="safetyView" class="detail-view hidden">
+        <h2>Safety Best Practices</h2>
+        <div style="font-size:14px;line-height:1.6;max-width:700px;">
+          <p><b>1. Meet in Public</b><br>Always arrange to meet in a well-lit, public place such as a coffee shop, grocery store parking lot, or police station safe-exchange zone. Avoid private residences for initial transactions.</p>
+          <p><b>2. Bring a Friend</b><br>Whenever possible, bring someone with you. There is safety in numbers, and a second set of eyes can help spot red flags.</p>
+          <p><b>3. Don't Trust, Verify</b><br>Avoid checks, money wires, or payment apps with strangers. If using Bitcoin, verify the transaction in person before handing over goods.</p>
+          <p><b>4. Inspect Before Paying</b><br>Thoroughly inspect the item before exchanging money. For cars, ask for maintenance records and consider a mechanic's inspection. For housing, tour the property and verify the landlord's identity.</p>
+          <p><b>5. Trust Your Gut</b><br>If something feels off, walk away. No deal is worth your safety. Report suspicious behavior to local authorities.</p>
+          <p><b>6. Verify Identity</b><br>Use Nostr's cryptographic identity to verify the seller's reputation across relays. A long-standing pubkey with positive feedback is more trustworthy than an anonymous email.</p>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="dataView" class="detail-view hidden">
+        <h2>My Data</h2>
+        <p style="font-size:13px;">Export your local listings cache or import a previously exported backup.</p>
+        <div style="margin: 15px 0;">
+          <button data-action="export-data"><b>Export Data to JSON</b></button>
+          <p style="font-size:11px;color:var(--meta-color);">Downloads all cached Nostr events from your browser.</p>
+        </div>
+        <hr>
+        <div style="margin: 15px 0;">
+          <label style="font-weight:bold;">Import Data:</label><br>
+          <input type="file" id="dataImportFile" accept=".json,application/json" data-action="import-data" style="margin-top:6px;">
+          <p style="font-size:11px;color:var(--meta-color);">Replaces your local cache with the uploaded file. Duplicate events are skipped.</p>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="messagesView" class="detail-view hidden">
+        <h2>Messages</h2>
+        <div style="margin-bottom:12px;">
+          <button data-action="toggle-composer"><b>+ New Message</b></button>
+        </div>
+        <div id="composerPanel" class="hidden" style="margin: 15px 0; padding: 15px; background: var(--form-bg); border: 2px solid var(--border-dark);">
+          <h3 style="margin-top:0;font-family:'Times New Roman', serif;">Send a DM</h3>
+          <table class="form-table">
+            <tr><td>To (pubkey/npub):</td><td><input type="text" id="dmRecipient" style="width:280px;" placeholder="npub1... or hex"></td></tr>
+            <tr><td>Message:</td><td><textarea id="dmComposeText" rows="3" style="width:100%;max-width:400px;"></textarea></td></tr>
+            <tr><td></td><td><button data-action="send-composed-dm">Send Encrypted DM</button></td></tr>
+          </table>
+          <div id="dmComposeStatus" style="margin-top:8px;font-weight:bold;"></div>
+        </div>
+        <div id="dmInboxContainer">
+          <h3 style="font-size:16px;font-family:'Times New Roman', serif;">Inbox</h3>
+          <div id="dmInbox" style="font-size:12px;">
+            <p><i>Login with a Nostr extension to decrypt and view incoming messages.</i></p>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+
+      <div id="donateView" class="detail-view hidden">
+        <h2>Donate</h2>
+        <div style="font-size:14px;line-height:1.6;max-width:700px;">
+          <p>YardSale.exchange is free, open-source software. If you find it useful, consider supporting development.</p>
+          <p><b>Bitcoin Lightning:</b> <code>donate@yoursale.exchange</code> <i>(placeholder)</i></p>
+          <p><b>On-chain:</b> <code>bc1q...</code> <i>(placeholder)</i></p>
+        </div>
+        <div style="margin-top:20px;">
+          <button data-action="go-home">← Back to listings</button>
+        </div>
+      </div>
+    </main>
+
+    <aside class="sidebar sidebar-right">
+      <div class="ad">
+        <b>Your Ad Here!</b><br>
+        <span class="blink">NEW!</span><br>
+        <a href="mailto:ads@yardsale.exchange">Email us</a>
+      </div>
+    </aside>
+  </div>
+
+  <div class="footer">
+    <div style="margin-bottom:6px;">
+      You are visitor #<span class="counter" id="hitCounter">000001</span>
+      &nbsp;|&nbsp;
+      <a href="#/about">About</a> &bull; <a href="#/safety">Safety</a> &bull; <a href="#/terms">Terms</a> &bull; <a href="#/donate">Donate</a>
+    </div>
+    <div>est. in 2026 YardSale.exchange. <span id="footSlogan">Local classifieds powered by Nostr.</span></div>
+  </div>
+</div>
+
+<div id="btcpayOverlay">
+  <div id="btcpayBox">
+    <h3 style="margin-top:0;font-family:'Times New Roman', serif;">Complete Payment</h3>
+    <div id="btcpayStatus" style="font-size:13px;margin-bottom:10px;">Creating invoice...</div>
+    <div id="btcpayLink" style="margin-bottom:10px;"></div>
+    <div id="btcpayQr" style="margin-bottom:10px;"></div>
+    <button data-action="close-btcpay">Cancel</button>
+  </div>
+</div>
+
+<script type="module">
+  import * as NostrTools from 'https://esm.sh/nostr-tools@2.7.1';
+  import Dexie from 'https://esm.sh/dexie@4.0.8';
+
+  const BTCPAY_CONFIG = { url: '', storeId: '', apiKey: '' };
+
+  const hexToBytes = hex => Uint8Array.from(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+  const bytesToHex = bytes => Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
+
+  const db = new Dexie('YardSaleDB');
+  db.version(1).stores({ events: 'id, kind, pubkey, created_at', meta: 'key' });
+  db.version(2).stores({ events: 'id, kind, pubkey, created_at', meta: 'key', dms: 'id, kind, pubkey, created_at' });
+
+  class RelayConn {
+    constructor(url, app) {
+      this.url = url; this.app = app; this.ws = null; this.status = 'disconnected';
+      this.eose = false; this.timer = null; this.attempts = 0; this.subs = new Map();
+      this.connect();
+    }
+    connect() {
+      if (this.ws) { try { this.ws.close(); } catch(e){} }
+      this.status = 'connecting'; this.app.renderRelayStatus();
+      try {
+        this.ws = new WebSocket(this.url);
+        this.ws.onopen = () => {
+          this.status = 'connected'; this.attempts = 0; this.eose = false; this.app.renderRelayStatus();
+          this.closeSub('ys_feed');
+          const thirtyDaysAgo = Math.floor(Date.now()/1000) - 30*24*3600;
+          this.req('ys_feed', { kinds: [30402], limit: 500, since: thirtyDaysAgo }, true);
+          this.closeSub('ys_del'); this.req('ys_del', { kinds: [5], since: thirtyDaysAgo }, true);
+          this.closeSub('ys_nip65'); this.req('ys_nip65', { kinds: [10002] }, false);
+        };
+        this.ws.onmessage = e => this.app.handleRelayMessage(this, e.data);
+        this.ws.onerror = () => this.scheduleReconnect();
+        this.ws.onclose = () => this.scheduleReconnect();
+      } catch(e) { this.scheduleReconnect(); }
+    }
+    req(id, filter, persistent) { this.subs.set(id, {persistent, filter}); this.send(['REQ', id, filter]); }
+    closeSub(id) { if (this.subs.has(id)) { this.send(['CLOSE', id]); this.subs.delete(id); } }
+    scheduleReconnect() {
+      this.status = 'disconnected';
+      if (this.timer) return;
+      const delay = Math.min(30000, 1000 * Math.pow(2, this.attempts));
+      this.attempts++; this.timer = setTimeout(() => { this.timer = null; this.connect(); }, delay);
+      this.app.renderRelayStatus();
+    }
+    send(msg) { if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(msg)); }
+    close() { if (this.timer) clearTimeout(this.timer); if (this.ws) { try { this.ws.close(); } catch(e){} } this.status = 'disconnected'; }
+  }
+
+  const app = {
+    relays: [], relayConns: {}, events: new Map(), dms: [],
+    currentCategory: 'all', currentView: 'browse', btcMode: false, darkMode: false,
+    satsRate: 2500, currentPubkey: null, powDifficulty: 12, eoseCount: 0, btcpayPoll: null,
+    validCategories: ['for sale','housing','jobs','vehicles','services','community','free stuff'],
+    pageSize: 8, currentPage: 1, renderDebounce: null, isPublishing: false,
+    relayExpanded: false, favorites: new Set(),
+    BANNED_WORDS: ['csam','cp','child porn','hitman','assassination','heroin','fentanyl','meth','cocaine delivery'],
+    sortMode: 'newest', currentSeller: null, editingId: null,
+    initialLoad: true, dmCache: new Map(), newDmCount: 0,
+
+    async init() {
+      this.paramIndex = new Map();
+      this.loadTheme(); this.loadRelays(); this.loadFavorites(); this.setupRouter();
+      this.bindGlobalEvents();
+      await this.loadCache(); await this.loadDMs();
+      if (window.nostr && !this.currentPubkey && !localStorage.getItem('ys_generated_sk')) {
+        try {
+          const pubkey = await window.nostr.getPublicKey();
+          this.currentPubkey = pubkey;
+          localStorage.setItem('yardsale_npub', pubkey);
+        } catch(e) {}
+      }
+      this.fetchBtcRate(); this.connectAllRelays();
+      this.setupPostPreview(); this.setupDraftWarning(); this.setupImageFallbacks();
+      this.startSloganRotator(); this.renderIdentity(); this.renderRelayStatus();
+      this.updateCounter();
+      document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') this.doSearch(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
+          e.preventDefault();
+          const search = document.getElementById('searchInput');
+          if (search) { search.focus(); search.select(); }
+        }
+      });
+      this.registerSW();
+      this.initialLoad = false;
+      this.router();
+    },
+
+    upsertEvent(ev) {
+      const dTag = ev.tags.find(t => t[0] === 'd')?.[1] || '';
+      if (dTag && ev.kind >= 30000 && ev.kind < 40000) {
+        const paramKey = `${ev.kind}:${ev.pubkey}:${dTag}`;
+        const oldId = this.paramIndex.get(paramKey);
+        if (oldId && oldId !== ev.id) {
+          const oldEv = this.events.get(oldId);
+          if (oldEv && ev.created_at <= oldEv.created_at) return false;
+          this.events.delete(oldId); db.events.delete(oldId).catch(() => {});
+        }
+        this.paramIndex.set(paramKey, ev.id);
+      } else {
+        const existing = this.events.get(ev.id);
+        if (existing && ev.created_at <= existing.created_at) return false;
+      }
+      this.events.set(ev.id, ev); db.events.put(ev).catch(() => {});
+      return true;
+    },
+
+    defaultRelays: ['wss://relay.damus.io','wss://nos.lol','wss://relay.nostr.band'],
+    loadRelays() { const saved = localStorage.getItem('yardsale_relays'); this.relays = saved ? JSON.parse(saved) : [...this.defaultRelays]; },
+    saveRelays() { localStorage.setItem('yardsale_relays', JSON.stringify(this.relays)); },
+    connectAllRelays() {
+      this.relays.forEach(url => { if (!this.relayConns[url]) this.relayConns[url] = new RelayConn(url, this); });
+      this.totalRelays = this.relays.length; this.eoseCount = 0; this.updateSyncBanner();
+    },
+
+    async loadCache() {
+      try { const all = await db.events.where('kind').equals(30402).toArray(); all.forEach(ev => { if (ev && ev.id) this.upsertEvent(ev); }); }
+      catch(e) { console.error('DB load failed', e); }
+    },
+    async loadDMs() {
+      try { const all = await db.dms.toArray(); this.dms = all.sort((a,b) => b.created_at - a.created_at).slice(0, 200); }
+      catch(e) { console.error('DM load failed', e); }
+    },
+    async saveDM(ev) { try { await db.dms.put(ev); } catch(e) {} },
+
+    isYardSaleEvent(ev) {
+      if (ev.kind !== 30402) return false;
+      const hasTitle = ev.tags.some(t => t[0] === 'title');
+      const hasPrice = ev.tags.some(t => t[0] === 'price');
+      const hasLocation = ev.tags.some(t => t[0] === 'location');
+      const catTag = ev.tags.find(t => t[0] === 'category');
+      const hasValidCategory = catTag && this.validCategories.includes(catTag[1]);
+      return hasTitle && hasPrice && hasLocation && hasValidCategory;
+    },
+
+    containsBanned(ev) {
+      const text = ((ev.content || '') + ' ' + (ev.tags?.find(t=>t[0]==='title')?.[1]||'')).toLowerCase();
+      return this.BANNED_WORDS.some(w => text.includes(w));
+    },
+
+    sanitizeUrl(url) {
+      if (!url) return '';
+      const trimmed = url.trim();
+      if (/^(https?|data):/i.test(trimmed)) return trimmed;
+      return '';
+    },
+
+    jsString(text) {
+      return JSON.stringify(text ?? '').slice(1, -1);
+    },
+
+    runPow(template, difficulty, onProgress) {
+      return new Promise((resolve, reject) => {
+        const code = `
+          import * as NostrTools from 'https://esm.sh/nostr-tools@2.7.1';
+          function getPow(id) {
+            let count = 0;
+            for (let i = 0; i < id.length; i++) {
+              const n = parseInt(id[i], 16);
+              if (n === 0) { count += 4; continue; }
+              for (let bit = 3; bit >= 0; bit--) {
+                if ((n >> bit) & 1) return count;
+                count++;
+              }
+            }
+            return count;
+          }
+          async function mineEvent(template, difficulty) {
+            const ev = JSON.parse(JSON.stringify(template));
+            ev.tags = ev.tags.filter(t => t[0] !== 'nonce');
+            let nonce = 0;
+            const start = performance.now();
+            while (true) {
+              ev.tags.push(['nonce', nonce.toString()]);
+              const hash = NostrTools.getEventHash(ev);
+              if (getPow(hash) >= difficulty) return ev;
+              ev.tags.pop();
+              nonce++;
+              if (nonce % 500 === 0) {
+                postMessage({ type: 'progress', nonce });
+                await new Promise(r => setTimeout(r, 0));
+                if (performance.now() - start > 30000) throw new Error('PoW mining timed out');
+              }
+            }
+          }
+          self.onmessage = async (e) => {
+            try {
+              const result = await mineEvent(e.data.template, e.data.difficulty);
+              postMessage({ type: 'done', event: result });
+            } catch(err) {
+              postMessage({ type: 'error', message: err.message });
+            }
+          };
+        `;
+        const blob = new Blob([code], { type: 'text/javascript' });
+        const worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+        worker.onmessage = (e) => {
+          if (e.data.type === 'progress') onProgress?.(e.data.nonce);
+          if (e.data.type === 'done') { worker.terminate(); resolve(e.data.event); }
+          if (e.data.type === 'error') { worker.terminate(); reject(new Error(e.data.message)); }
+        };
+      });
+    },
+
+    handleRelayMessage(conn, data) {
+      try {
+        const msg = JSON.parse(data);
+        if (msg[0] === 'EOSE') {
+          conn.eose = true; this.eoseCount++; this.updateSyncBanner(); this.renderRelayStatus();
+          const subId = msg[1];
+          const sub = conn.subs.get(subId);
+          if (sub && !sub.persistent) conn.closeSub(subId);
+        } else if (msg[0] === 'EVENT' && msg[2]) {
+          const ev = msg[2];
+          if (!NostrTools.validateEvent(ev) || !NostrTools.verifyEvent(ev)) return;
+          if (ev.kind === 30402) {
+            if (!this.isYardSaleEvent(ev)) { console.log('Ignored external listing:', ev.id.slice(0,8)); return; }
+            if (this.containsBanned(ev)) { console.warn('Filtered banned content:', ev.id); return; }
+            if (this.upsertEvent(ev) && (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites' || this.currentView === 'seller')) this.scheduleRender();
+          } else if (ev.kind === 5) {
+            const idsToDelete = ev.tags.filter(t => t[0] === 'e').map(t => t[1]);
+            idsToDelete.forEach(id => {
+              const oldEv = this.events.get(id);
+              if (oldEv && oldEv.pubkey !== ev.pubkey) {
+                console.warn('Ignoring unauthorized deletion for', id.slice(0,8));
+                return;
+              }
+              if (oldEv) {
+                const dTag = oldEv.tags.find(t => t[0] === 'd')?.[1] || '';
+                if (dTag && oldEv.kind >= 30000 && oldEv.kind < 40000) {
+                  const paramKey = `${oldEv.kind}:${oldEv.pubkey}:${dTag}`;
+                  if (this.paramIndex.get(paramKey) === id) this.paramIndex.delete(paramKey);
+                }
+                this.events.delete(id);
+              }
+            });
+            if (idsToDelete.length > 0) db.events.bulkDelete(idsToDelete).catch(() => {});
+            if (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites' || this.currentView === 'seller') this.scheduleRender();
+          } else if (ev.kind === 10002 && this.currentPubkey && ev.pubkey === this.currentPubkey) {
+            this.suggestedRelays = ev.tags.filter(t => t[0] === 'r').map(t => t[1]);
+            if (this.currentView === 'relays') this.renderNip65();
+          } else if (ev.kind === 4) {
+            if (ev.pubkey === this.currentPubkey || ev.tags.some(t => t[0]==='p' && t[1]===this.currentPubkey)) {
+              if (!this.dms.find(d => d.id === ev.id)) {
+                this.dms.push(ev);
+                if (this.dms.length > 200) this.dms.shift();
+                this.saveDM(ev);
+                this.newDmCount++;
+                this.toast('New encrypted message received!', 'success', 4000);
+                if (this.currentView === 'messages') this.renderDMInbox();
+              }
+            }
+          } else if (ev.kind === 1) {
+            const existing = this.events.get(ev.id);
+            if (!existing || ev.created_at > existing.created_at) {
+              this.events.set(ev.id, ev);
+              if (this.currentView === 'detail') {
+                const m = location.hash.match(/\/listing\/(.+)/);
+                if (m && m[1] && ev.tags.some(t => t[0]==='e' && t[1]===m[1])) this.renderComments(m[1]);
+              }
+            }
+          }
+        } else if (msg[0] === 'NOTICE' || msg[0] === 'CLOSED') {
+          console.log('Relay notice:', conn.url, msg);
+        }
+      } catch(e) {}
+    },
+
+    broadcastReq(id, filter) { Object.values(this.relayConns).forEach(c => c.req(id, filter, false)); },
+    publishToRelays(event) { Object.values(this.relayConns).forEach(c => c.send(['EVENT', event])); },
+
+    updateSyncBanner() {
+      const el = document.getElementById('syncBanner');
+      if (!el) return;
+      const connected = Object.values(this.relayConns).filter(c => c.status === 'connected').length;
+      const anyPending = Object.values(this.relayConns).some(c => c.status === 'connecting' || !c.eose);
+      if (connected >= 3) { el.style.display = 'flex'; el.innerHTML = `<span style="color:#0a0;">●</span> Connected (${connected})`; }
+      else if (anyPending) { el.style.display = 'flex'; el.innerHTML = `<span class="blink">●</span> Syncing with Nostr relays...`; }
+      else { el.style.display = 'none'; }
+    },
+
+    updateCounter() {
+      let hits = parseInt(localStorage.getItem('yardsale_hits') || '1');
+      hits++; localStorage.setItem('yardsale_hits', hits);
+      const el = document.getElementById('hitCounter');
+      if (el) el.textContent = hits.toString().padStart(6, '0');
+    },
+
+    renderRelayStatus() {
+      const el = document.getElementById('relayStatus');
+      if (!el) return;
+      const connected = Object.values(this.relayConns).filter(c => c.status === 'connected').length;
+      el.textContent = `${connected}/${this.relays.length} connected`;
+      const shortEl = document.getElementById('relayShortList');
+      if (shortEl) {
+        const max = this.relayExpanded ? this.relays.length : 3;
+        const list = this.relays.slice(0, max).map(url => {
+          const c = this.relayConns[url];
+          const ok = c && c.status === 'connected';
+          return `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px;">
+            <span style="color:${ok?'#0a0':'#666'}">${ok?'●':'○'}</span>
+            ${this.escape(url.replace('wss://','').replace(/\/$/,''))}
+          </div>`;
+        }).join('');
+        shortEl.innerHTML = list;
+      }
+    },
+
+    toggleRelayExpand() {
+      this.relayExpanded = !this.relayExpanded;
+      const btn = document.getElementById('relayToggleBtn');
+      if (btn) btn.textContent = this.relayExpanded ? 'Show less' : 'Show all';
+      this.renderRelayStatus();
+    },
+    toggleSidebar() { document.querySelector('.sidebar-left').classList.toggle('open'); },
+
+    parseEvent(ev) {
+      const images = [];
+      const item = { id: ev.id, pubkey: ev.pubkey, date: new Date(ev.created_at*1000).toLocaleString(), ts: ev.created_at, desc: ev.content||'', price: 0, featured: false, paymentOption:'', email:'', images:[], image:'', category:'', location:'' };
+      for (const [k, ...rest] of ev.tags) {
+        if (k==='title') item.title = rest[0];
+        if (k==='price') item.price = parseInt(rest[0])||0;
+        if (k==='category') item.category = rest[0];
+        if (k==='location') item.location = rest[0];
+        if (k==='email') item.email = rest[0];
+        if (k==='image' && rest[0]) {
+          const clean = this.sanitizeUrl(rest[0]);
+          if (clean) item.images.push(clean);
+        }
+        if (k==='payment_option') item.paymentOption = rest[0];
+        if (k==='featured') item.featured = true;
+      }
+      item.image = item.images[0] || '';
+      return item;
+    },
+
+    getFilteredEvents() {
+      const loc = document.getElementById('locationFilter').value.trim().toLowerCase();
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const minP = parseInt(document.getElementById('minPrice')?.value) || 0;
+      const maxP = parseInt(document.getElementById('maxPrice')?.value) || Infinity;
+      const items = [];
+      this.events.forEach(ev => {
+        if (ev.kind !== 30402) return;
+        const item = this.parseEvent(ev);
+        const matchesCat = this.currentCategory === 'all' || item.category === this.currentCategory;
+        const matchesLoc = !loc || (item.location || '').toLowerCase().includes(loc);
+        const matchesQ = !q || ((item.title||'').toLowerCase().includes(q)) || ((item.desc||'').toLowerCase().includes(q));
+        const matchesUser = this.currentView !== 'my' || (this.currentPubkey && item.pubkey === this.currentPubkey);
+        const matchesFav = this.currentView !== 'favorites' || this.favorites.has(item.id);
+        const matchesSeller = !this.currentSeller || item.pubkey === this.currentSeller;
+        const matchesPrice = item.price >= minP && item.price <= maxP;
+        if (matchesCat && matchesLoc && matchesQ && matchesUser && matchesFav && matchesSeller && matchesPrice) items.push(item);
+      });
+      items.sort((a,b) => {
+        if (a.featured && !b.featured) return -1;
+        if (!a.featured && b.featured) return 1;
+        if (this.sortMode === 'price-low') return a.price - b.price;
+        if (this.sortMode === 'price-high') return b.price - a.price;
+        return new Date(b.date) - new Date(a.date);
+      });
+      return items;
+    },
+
+    hideAllViews() {
+      ['browseView','postForm','detailView','aboutView','termsView','safetyView','relaysView','dataView','messagesView','donateView'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+    },
+
+    render() {
+      if (this.currentView !== 'browse' && this.currentView !== 'my' && this.currentView !== 'favorites' && this.currentView !== 'seller') return;
+      this.hideAllViews();
+      document.getElementById('browseView').classList.remove('hidden');
+      const grid = document.getElementById('listingsGrid');
+      const title = document.getElementById('listTitle');
+      const items = this.getFilteredEvents();
+      title.textContent = this.currentView === 'my' ? 'My Listings' : this.currentView === 'favorites' ? 'Saved Listings' : this.currentView === 'seller' ? `Listings by ${this.npubShort(this.currentSeller)}` : (this.currentCategory === 'all' ? 'Recent Listings' : this.currentCategory.toUpperCase());
+      if (items.length === 0) {
+        if (this.initialLoad) {
+          grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:#666;">Loading listings...</div>';
+        } else {
+          const emptyMsg = this.currentView === 'favorites' ? 'No saved listings yet.' : this.currentView === 'seller' ? 'No listings from this seller.' : 'No listings found. Be the first to post!';
+          grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#666;">${emptyMsg}</div>`;
+        }
+        document.getElementById('paginationControls').innerHTML = '';
+        return;
+      }
+      const totalPages = Math.ceil(items.length / this.pageSize) || 1;
+      if (this.currentPage > totalPages) this.currentPage = totalPages;
+      const start = (this.currentPage - 1) * this.pageSize;
+      const pageItems = items.slice(start, start + this.pageSize);
+      grid.innerHTML = pageItems.map(item => {
+        const img = item.image ? `<img src="${this.escape(item.image)}" alt="" style="width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block;">` : `<div class="no-img" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">[ NO IMAGE ]<br><small>${(item.category||'UNKNOWN').toUpperCase()}</small></div>`;
+        const featuredClass = item.featured ? 'card-featured' : '';
+        const featuredBadge = item.featured ? '<span class="tag-featured">FEATURED</span>' : '';
+        const isFav = this.favorites.has(item.id);
+        const favBtn = `<button data-action="toggle-fav" data-id="${item.id}" style="position:absolute;top:4px;right:4px;font-size:13px;background:transparent;border:none;cursor:pointer;z-index:2;" aria-label="${isFav?'Unsave':'Save'} listing">${isFav?'❤️':'🤍'}</button>`;
+        return `<div class="card ${featuredClass}" data-action="view-listing" data-id="${item.id}">${favBtn}<div class="card-img">${img}</div><div class="card-title">${this.escape(item.title||'Untitled')} ${featuredBadge}</div><div class="card-price">${this.formatPrice(item.price||0)}</div><div class="card-meta">${this.escape(item.location||'')} • ${this.npubShort(item.pubkey)}</div><div class="card-date" title="${this.escape(item.date)}">${this.timeAgo(item.ts)}</div></div>`;
+      }).join('');
+      this.renderPagination(items.length, totalPages);
+    },
+
+    renderPagination(totalItems, totalPages) {
+      const el = document.getElementById('paginationControls');
+      if (!el) return;
+      let html = '<div style="display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap;">';
+      html += `<button data-action="prev-page" ${this.currentPage <= 1 ? 'disabled' : ''}>← Prev</button>`;
+      const maxButtons = 10;
+      let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons/2));
+      let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+      if (endPage - startPage < maxButtons - 1) startPage = Math.max(1, endPage - maxButtons + 1);
+      for (let i = startPage; i <= endPage; i++) {
+        if (i === this.currentPage) html += `<span style="font-weight:bold;padding:2px 8px;background:var(--win-gray);border:1px solid var(--btn-shadow);">${i}</span>`;
+        else html += `<button data-action="go-to-page" data-page="${i}" style="padding:2px 8px;">${i}</button>`;
+      }
+      html += `<button data-action="next-page" ${this.currentPage >= totalPages ? 'disabled' : ''}>Next →</button></div>`;
+      html += `<div style="text-align:center;margin-top:8px;font-size:11px;"><label>Per page: <select data-action="set-page-size" style="font-size:11px;padding:1px;"><option value="8" ${this.pageSize==8?'selected':''}>8</option><option value="16" ${this.pageSize==16?'selected':''}>16</option><option value="24" ${this.pageSize==24?'selected':''}>24</option><option value="32" ${this.pageSize==32?'selected':''}>32</option></select></label><span style="margin-left:10px;">${totalItems} listings total</span></div>`;
+      el.innerHTML = html;
+    },
+
+    goToPage(n) { this.currentPage = n; this.updateBrowseHash(); this.render(); window.scrollTo({top: 0, behavior: 'smooth'}); },
+    nextPage() { this.goToPage(this.currentPage + 1); },
+    prevPage() { this.goToPage(this.currentPage - 1); },
+    setPageSize(n) { this.pageSize = parseInt(n); this.currentPage = 1; this.updateBrowseHash(); this.render(); },
+
+    showDetail(id) {
+      const ev = this.events.get(id);
+      if (!ev) return;
+      const item = this.parseEvent(ev);
+      this.currentView = 'detail';
+      this.hideAllViews();
+      document.getElementById('detailView').classList.remove('hidden');
+      this.updateMetaTags(item);
+      const mainImg = item.images.length > 0 ? `<img src="${this.escape(item.images[0])}" class="detail-img detail-main-img" alt="">` : '';
+      const thumbs = item.images.length > 0 ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;">${item.images.map(url => `<img src="${this.escape(url)}" data-src="${this.escape(url)}" style="width:100px;height:75px;object-fit:cover;border:2px inset #c0c0c0;cursor:pointer;" class="thumb-img" alt="">`).join('')}</div>` : '';
+      let paymentLabel = 'Rent / Month:';
+      if (item.category === 'jobs') paymentLabel = 'Compensation:';
+      else if (item.category === 'vehicles') paymentLabel = 'Price:';
+      const paymentHtml = (item.category==='jobs'||item.category==='housing'||item.category==='vehicles') && item.paymentOption ? `<div style="margin-bottom:12px;"><b>${paymentLabel}</b> ${this.escape(item.paymentOption)}</div>` : '';
+      const emailHtml = item.email ? `<p><b>Email:</b> <a href="mailto:${this.escape(item.email)}">${this.escape(item.email)}</a></p>` : '';
+      const npub = this.hexToNpub(item.pubkey);
+      const isAuthor = this.currentPubkey && item.pubkey === this.currentPubkey;
+      const isFav = this.favorites.has(item.id);
+      const featureBtn = isAuthor && !item.featured ? `<button data-action="feature-item" data-id="${item.id}" style="color:#ff00ff;font-weight:bold;">⚡ Feature this post</button>` : (item.featured ? '<button disabled style="color:#666;">✓ Featured</button>' : '');
+      const dmSection = this.currentPubkey ? `<div style="margin-top:20px;padding:15px;background:var(--form-bg);border:2px solid var(--border-dark);"><h3 style="margin-top:0;font-family:'Times New Roman', serif;">Send Nostr DM</h3><p style="font-size:11px;">Uses NIP-44 / NIP-04 encryption via your extension.</p><table class="form-table"><tr><td>Message:</td><td><textarea id="dmMessage" rows="3" style="width:100%;max-width:400px;"></textarea></td></tr><tr><td></td><td><button data-action="submit-dm" data-pubkey="${item.pubkey}">Send Encrypted DM</button></td></tr></table><div id="dmStatus" style="margin-top:8px;font-weight:bold;"></div></div>` : `<p style="margin-top:16px;font-size:12px;"><i>Login with Nostr to send an encrypted DM to this seller.</i></p>`;
+      const reportBtn = this.currentPubkey ? `<button data-action="report-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Report</button>` : '';
+      const detailView = document.getElementById('detailView');
+      detailView.innerHTML = `<h2>${this.escape(item.title||'Untitled')}</h2><div style="font-size:18px;color:#060;font-weight:bold;margin-bottom:10px;">${this.formatPrice(item.price||0)}</div>${paymentHtml}<div style="margin-bottom:12px;"><b>Location:</b> ${this.escape(item.location||'')} &nbsp;|&nbsp; <b>Category:</b> ${this.escape(item.category||'')} &nbsp;|&nbsp; <b>Posted:</b> <span title="${this.escape(item.date)}">${this.timeAgo(item.ts)}</span></div>${mainImg}${thumbs}<p style="font-size:14px;line-height:1.5;">${this.escape(item.desc).replace(/\n/g,'<br>')}</p>${emailHtml}<p><b>Seller:</b> <a href="#/seller/${item.pubkey}" style="font-family:monospace;font-size:12px;word-break:break-all;">${this.escape(npub)}</a> <button data-action="copy-npub" data-npub="${this.escape(npub)}" style="margin-left:6px;font-size:11px;">Copy</button></p><hr><button data-action="go-home">← Back to listings</button>${featureBtn}${isAuthor ? `<button data-action="edit-item" data-id="${item.id}" style="margin-left:10px;">✏️ Edit</button><button data-action="delete-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Delete Post</button>` : ''}${reportBtn}<button data-action="toggle-fav" data-id="${item.id}" style="margin-left:10px;">${isFav?'❤️ Saved':'🤍 Save'}</button><button data-action="share-item" data-id="${item.id}" style="margin-left:10px;">🔗 Copy Link</button>${dmSection}<div style="margin-top:24px;"><h3 style="font-family:'Times New Roman', serif;">Comments</h3><div id="commentsSection"><p style="font-size:12px;"><i>Loading comments...</i></p></div></div>`;
+      detailView.querySelectorAll('.thumb-img').forEach(img => {
+        img.addEventListener('click', () => {
+          const main = document.querySelector('.detail-main-img');
+          if (main) main.src = img.dataset.src;
+        });
+      });
+      const mainImgEl = detailView.querySelector('.detail-main-img');
+      if (mainImgEl) {
+        mainImgEl.addEventListener('error', () => { mainImgEl.style.display = 'none'; }, { once: true });
+      }
+      this.fetchComments(id);
+    },
+
+    editItem(id) {
+      const ev = this.events.get(id);
+      if (!ev) return;
+      const item = this.parseEvent(ev);
+      this.editingId = id;
+      this.hideAllViews();
+      document.getElementById('postForm').classList.remove('hidden');
+      this.currentView = 'post';
+      document.getElementById('pTitle').value = item.title || '';
+      document.getElementById('pPrice').value = item.price || '';
+      document.getElementById('pCategory').value = item.category || 'for sale';
+      document.getElementById('pLocation').value = item.location || '';
+      document.getElementById('pEmail').value = item.email || '';
+      document.getElementById('pImage').value = item.images.join(', ') || '';
+      document.getElementById('pDesc').value = item.desc || '';
+      document.getElementById('pImage').dispatchEvent(new Event('input'));
+      const status = document.getElementById('formStatus');
+      if (status) { status.textContent = 'Editing listing. Submit to update.'; status.style.color = '#000080'; }
+      this.updatePostNote();
+    },
+
+    fetchComments(id) {
+      this.broadcastReq('comments_' + Date.now(), { kinds: [1], '#e': [id], limit: 50 });
+      setTimeout(() => this.renderComments(id), 1200);
+    },
+
+    renderComments(id) {
+      const el = document.getElementById('commentsSection');
+      if (!el) return;
+      const relevant = [];
+      this.events.forEach(ev => { if (ev.kind === 1 && ev.tags.some(t => t[0] === 'e' && t[1] === id)) relevant.push(ev); });
+      if (relevant.length === 0) { el.innerHTML = '<p style="font-size:12px;color:var(--meta-color);"><i>No comments yet.</i></p>'; return; }
+      relevant.sort((a,b) => b.created_at - a.created_at);
+      el.innerHTML = relevant.map(ev => `<div style="margin:6px 0;padding:8px;background:var(--card-bg);border:1px solid var(--btn-shadow);font-size:12px;"><div style="font-size:10px;color:var(--date-color);">${this.npubShort(ev.pubkey)} • ${this.timeAgo(ev.created_at)}</div><div style="margin-top:4px;">${this.escape(ev.content)}</div></div>`).join('');
+    },
+
+    showRelays() { this.currentView = 'relays'; this.hideAllViews(); document.getElementById('relaysView').classList.remove('hidden'); this.renderRelayTable(); if (this.suggestedRelays) this.renderNip65(); },
+    showAbout() { this.currentView = 'about'; this.hideAllViews(); document.getElementById('aboutView').classList.remove('hidden'); },
+    showTerms() { this.currentView = 'terms'; this.hideAllViews(); document.getElementById('termsView').classList.remove('hidden'); },
+    showSafety() { this.currentView = 'safety'; this.hideAllViews(); document.getElementById('safetyView').classList.remove('hidden'); },
+    showData() { this.currentView = 'data'; this.hideAllViews(); document.getElementById('dataView').classList.remove('hidden'); },
+    showDonate() { this.currentView = 'donate'; this.hideAllViews(); document.getElementById('donateView').classList.remove('hidden'); },
+    async showMessages() {
+      if (!this.currentPubkey) { this.toast('Login with a Nostr extension to use messages.', 'error'); return; }
+      this.currentView = 'messages'; this.hideAllViews(); document.getElementById('messagesView').classList.remove('hidden');
+      document.getElementById('dmInbox').innerHTML = '<p>Loading messages from relays...</p>'; this.fetchDMs();
+    },
+    toggleComposer() { const panel = document.getElementById('composerPanel'); if (panel) panel.classList.toggle('hidden'); },
+
+    async fetchDMs() {
+      if (!this.currentPubkey) return;
+      const sevenDaysAgo = Math.floor(Date.now()/1000) - 7*24*3600;
+      this.broadcastReq('dms_in_' + Date.now(), { kinds: [4], '#p': [this.currentPubkey], limit: 200, since: sevenDaysAgo });
+      this.broadcastReq('dms_out_' + Date.now(), { kinds: [4], authors: [this.currentPubkey], limit: 200, since: sevenDaysAgo });
+      setTimeout(() => this.renderDMInbox(), 2500);
+    },
+
+    async renderDMInbox() {
+      const container = document.getElementById('dmInbox');
+      const relevant = this.dms.filter(ev => ev.pubkey === this.currentPubkey || ev.tags.some(t => t[0]==='p' && t[1]===this.currentPubkey));
+      if (relevant.length === 0) { container.innerHTML = '<p>No messages found on connected relays yet.</p>'; return; }
+      relevant.sort((a,b) => b.created_at - a.created_at);
+      let html = '<div style="max-height:300px;overflow-y:auto;border:1px solid var(--btn-shadow);padding:4px;">';
+      for (const ev of relevant.slice(0, 50)) {
+        const peer = ev.pubkey === this.currentPubkey ? (ev.tags.find(t => t[0]==='p')?.[1] || 'unknown') : ev.pubkey;
+        const peerShort = this.npubShort(peer);
+        const time = new Date(ev.created_at * 1000).toLocaleString();
+        let content = '[Encrypted - unable to decrypt]'; let canDecrypt = false;
+        const cacheKey = `${ev.id}:${peer}`;
+        if (this.dmCache.has(cacheKey)) {
+          content = this.escape(this.dmCache.get(cacheKey)); canDecrypt = true;
+        } else {
+          try {
+            const decrypted = await this.decryptDM(peer, ev.content);
+            if (decrypted) { content = this.escape(decrypted); canDecrypt = true; this.dmCache.set(cacheKey, decrypted); }
+          } catch(e) {}
+        }
+        const dir = ev.pubkey === this.currentPubkey ? '→' : '←';
+        html += `<div style="margin:4px 0;padding:6px;background:var(--card-bg);border:1px solid var(--btn-shadow);"><div style="font-size:10px;color:var(--date-color);">${dir} ${peerShort} • ${time}</div><div style="margin-top:2px;${canDecrypt?'':'color:#888;font-style:italic;'}">${content}</div></div>`;
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    },
+
+    async encryptDM(recipientPubkey, text) {
+      if (window.nostr?.nip44?.encrypt) return await window.nostr.nip44.encrypt(recipientPubkey, text);
+      if (window.nostr?.nip04?.encrypt) return await window.nostr.nip04.encrypt(recipientPubkey, text);
+      throw new Error('Extension does not support NIP-44 or NIP-04 encryption');
+    },
+    async decryptDM(peerPubkey, ciphertext) {
+      if (window.nostr?.nip44?.decrypt) { try { return await window.nostr.nip44.decrypt(peerPubkey, ciphertext); } catch(e) {} }
+      if (window.nostr?.nip04?.decrypt) { try { return await window.nostr.nip04.decrypt(peerPubkey, ciphertext); } catch(e) {} }
+      return null;
+    },
+
+    renderRelayTable() {
+      const tbody = document.getElementById('relayTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = this.relays.map(url => {
+        const c = this.relayConns[url];
+        const status = c ? c.status : 'disconnected';
+        const color = status==='connected' ? '#060' : (status==='connecting' ? '#660' : '#800');
+        return `<tr><td style="font-family:monospace;font-size:11px;">${this.escape(url)}</td><td style="color:${color};font-weight:bold;">${status}</td><td>${c&&c.eose?'✓':'—'}</td><td><button data-action="reconnect-relay" data-url="${this.jsString(url)}" style="font-size:11px;">Reconnect</button><button data-action="remove-relay" data-url="${this.jsString(url)}" style="font-size:11px;color:#800;margin-left:4px;">Remove</button></td></tr>`;
+      }).join('');
+    },
+
+    addRelayFromInput() {
+      const input = document.getElementById('newRelayUrl');
+      let url = input.value.trim();
+      if (!url) return;
+      if (!url.startsWith('wss://')) url = 'wss://' + url;
+      if (!this.relays.includes(url)) {
+        this.relays.push(url); this.saveRelays(); this.relayConns[url] = new RelayConn(url, this);
+        this.renderRelayTable(); this.renderRelayStatus();
+      }
+      input.value = '';
+    },
+    removeRelay(url) {
+      if (this.relayConns[url]) { this.relayConns[url].close(); delete this.relayConns[url]; }
+      this.relays = this.relays.filter(u => u !== url); this.saveRelays();
+      this.renderRelayTable(); this.renderRelayStatus();
+    },
+    reconnectRelay(url) {
+      if (this.relayConns[url]) { this.relayConns[url].close(); delete this.relayConns[url]; }
+      this.relayConns[url] = new RelayConn(url, this); this.renderRelayTable();
+    },
+
+    async fetchNip65() {
+      if (!this.currentPubkey) { this.toast('Login with Nostr to discover relays from your NIP-65 list.', 'error'); return; }
+      document.getElementById('nip65Status').textContent = 'Querying relays...';
+      this.broadcastReq('nip65_' + Date.now(), { kinds: [10002], authors: [this.currentPubkey] });
+      setTimeout(() => { if (!this.suggestedRelays || this.suggestedRelays.length === 0) document.getElementById('nip65Status').textContent = 'No NIP-65 data found yet.'; }, 5000);
+    },
+    renderNip65() {
+      const sec = document.getElementById('nip65Section');
+      const list = document.getElementById('nip65List');
+      if (!sec || !list || !this.suggestedRelays) return;
+      sec.style.display = 'block';
+      list.innerHTML = this.suggestedRelays.map(url => {
+        const exists = this.relays.includes(url);
+        return `<li>${this.escape(url)} ${exists ? '<i>(already added)</i>' : `<button data-action="add-relay" data-url="${this.jsString(url)}" style="font-size:11px;">Add</button>`}</li>`;
+      }).join('');
+      document.getElementById('nip65Status').textContent = '';
+    },
+    addRelay(url) {
+      if (!this.relays.includes(url)) {
+        this.relays.push(url); this.saveRelays(); this.relayConns[url] = new RelayConn(url, this);
+        this.renderRelayTable(); this.renderRelayStatus();
+      }
+    },
+
+    async submitDM(recipientPubkey) {
+      const msg = document.getElementById('dmMessage').value.trim();
+      const status = document.getElementById('dmStatus');
+      if (!msg) return this.toast('Enter a message', 'error');
+      if (!this.currentPubkey) return this.toast('Login first', 'error');
+      if (localStorage.getItem('ys_generated_sk')) { status.textContent = 'DMs require a Nostr extension (browser keys cannot encrypt).'; status.style.color = '#800000'; return; }
+      try {
+        const ciphertext = await this.encryptDM(recipientPubkey, msg);
+        const ev = { kind: 4, created_at: Math.floor(Date.now()/1000), tags: [['p', recipientPubkey]], content: ciphertext, pubkey: this.currentPubkey };
+        const signed = await window.nostr.signEvent(ev);
+        this.publishToRelays(signed);
+        status.textContent = 'Encrypted DM published to relays!'; status.style.color = '#006600';
+        document.getElementById('dmMessage').value = '';
+        this.dms.push(signed); if (this.dms.length > 200) this.dms.shift();
+        this.saveDM(signed); if (this.currentView === 'messages') this.renderDMInbox();
+      } catch(e) { status.textContent = 'Failed: ' + (e.message || 'Encryption error'); status.style.color = '#800000'; }
+    },
+
+    async sendComposedDM() {
+      const recipientInput = document.getElementById('dmRecipient').value.trim();
+      const text = document.getElementById('dmComposeText').value.trim();
+      const status = document.getElementById('dmComposeStatus');
+      if (!recipientInput || !text) { status.textContent = 'Fill in recipient and message.'; status.style.color='#800000'; return; }
+      if (!this.currentPubkey) { status.textContent = 'Login first.'; status.style.color='#800000'; return; }
+      if (localStorage.getItem('ys_generated_sk')) { status.textContent = 'Generated identities cannot encrypt DMs without an extension.'; status.style.color = '#800000'; return; }
+      let recipientPubkey;
+      try {
+        if (recipientInput.startsWith('npub')) {
+          const { data } = NostrTools.nip19.decode(recipientInput);
+          recipientPubkey = typeof data === 'string' ? data : data.pubkey || data;
+        } else { recipientPubkey = recipientInput; }
+      } catch(e) { status.textContent = 'Invalid recipient.'; status.style.color='#800000'; return; }
+      try {
+        const ciphertext = await this.encryptDM(recipientPubkey, text);
+        const ev = { kind: 4, created_at: Math.floor(Date.now()/1000), tags: [['p', recipientPubkey]], content: ciphertext, pubkey: this.currentPubkey };
+        const signed = await window.nostr.signEvent(ev);
+        this.publishToRelays(signed);
+        status.textContent = 'DM sent!'; status.style.color = '#006600';
+        document.getElementById('dmComposeText').value = '';
+        this.dms.push(signed); if (this.dms.length > 200) this.dms.shift();
+        this.saveDM(signed); if (this.currentView === 'messages') this.renderDMInbox();
+      } catch(e) { status.textContent = 'Failed: ' + e.message; status.style.color = '#800000'; }
+    },
+
+    setupRouter() { window.addEventListener('hashchange', () => this.router()); },
+
+    router() {
+      const raw = location.hash.slice(1) || '/';
+      if (raw.startsWith('/listing/')) { this.showDetail(raw.replace('/listing/', '')); }
+      else {
+        this.updateMetaTags(null);
+        if (raw === '/about') this.showAbout();
+        else if (raw === '/safety') this.showSafety();
+        else if (raw === '/terms') this.showTerms();
+        else if (raw === '/relays') this.showRelays();
+        else if (raw === '/data') this.showData();
+        else if (raw === '/messages') this.showMessages();
+        else if (raw === '/donate') this.showDonate();
+        else if (raw === '/my') this.showMyListings();
+        else if (raw === '/favorites') this.showFavorites();
+        else if (raw.startsWith('/seller/')) this.showSeller(raw.replace('/seller/', ''));
+        else if (raw.startsWith('/?')) this.applyBrowseParams(new URLSearchParams(raw.slice(2)));
+        else this.goHome(false);
+      }
+    },
+
+    updateMetaTags(item) {
+      const setMeta = (prop, content) => {
+        let el = document.querySelector(`meta[property="${prop}"]`);
+        if (!el) { el = document.createElement('meta'); el.setAttribute('property', prop); document.head.appendChild(el); }
+        el.content = content || '';
+      };
+      if (item) {
+        const safeTitle = (item.title || 'Listing').replace(/[\n\r]/g, ' ');
+        setMeta('og:title', `${safeTitle} - YardSale.exchange`);
+        setMeta('og:description', (item.desc || '').replace(/[\n\r]/g, ' ').slice(0, 200));
+        setMeta('og:image', item.image || '');
+        setMeta('og:type', 'product');
+        setMeta('twitter:card', 'summary_large_image');
+        document.title = `${safeTitle} - YardSale.exchange`;
+      } else {
+        setMeta('og:title', 'YardSale.exchange - Local classifieds powered by Nostr');
+        setMeta('og:description', 'No cookies, no tracking. Buy, sell, and trade locally on Nostr.');
+        setMeta('og:image', '');
+        setMeta('og:type', 'website');
+        setMeta('twitter:card', 'summary');
+        document.title = 'YardSale.exchange';
+      }
+    },
+
+    applyBrowseParams(params) {
+      this.currentView = 'browse';
+      this.currentPage = Math.max(1, parseInt(params.get('p')) || 1);
+      const cat = params.get('cat') || 'all';
+      this.currentCategory = this.validCategories.includes(cat) ? cat : 'all';
+      document.getElementById('searchInput').value = params.get('q') || '';
+      document.getElementById('locationFilter').value = params.get('loc') || '';
+      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+      const catLi = document.querySelector(`#categoryList li[data-cat="${CSS.escape(this.currentCategory)}"]`);
+      if (catLi) catLi.classList.add('active');
+      this.currentSeller = null;
+      this.render();
+    },
+
+    updateBrowseHash() {
+      const params = new URLSearchParams();
+      const q = document.getElementById('searchInput').value.trim();
+      const loc = document.getElementById('locationFilter').value.trim();
+      if (q) params.set('q', q);
+      if (loc) params.set('loc', loc);
+      if (this.currentCategory !== 'all') params.set('cat', this.currentCategory);
+      if (this.currentPage > 1) params.set('p', this.currentPage);
+      const hash = params.toString() ? '#/?' + params.toString() : '#/';
+      if (location.hash !== hash) history.replaceState(null, '', hash);
+    },
+
+    goHome(clearHash = true) {
+      this.editingId = null; this.currentSeller = null;
+      this.currentCategory = 'all'; this.currentView = 'browse'; this.currentPage = 1;
+      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
+      document.getElementById('searchInput').value = '';
+      document.getElementById('locationFilter').value = '';
+      if (clearHash) { if (location.hash !== '#/') history.pushState(null, '', '#/'); }
+      this.render();
+    },
+
+    togglePostForm() {
+      const form = document.getElementById('postForm');
+      if (form.classList.contains('hidden')) {
+        this.editingId = null; this.hideAllViews(); form.classList.remove('hidden'); this.currentView = 'post';
+        document.getElementById('pTitle').value = ''; document.getElementById('pPrice').value = '';
+        document.getElementById('pCategory').value = 'for sale'; document.getElementById('pLocation').value = '';
+        document.getElementById('pEmail').value = ''; document.getElementById('pImage').value = '';
+        document.getElementById('pDesc').value = '';
+        document.getElementById('postImagePreview').style.display = 'none';
+        const previewImg = document.getElementById('postImagePreview')?.querySelector('img');
+        if (previewImg) previewImg.src = '';
+        this.updatePostNote();
+        const status = document.getElementById('formStatus');
+        if (status) { status.textContent = ''; status.style.color = '#006600'; }
+      } else { this.editingId = null; this.goHome(); }
+    },
+
+    updatePostNote() {
+      const note = document.getElementById('nostrPostNote');
+      const status = document.getElementById('formStatus');
+      if (this.currentPubkey) { note.textContent = 'Posting as: ' + this.npubShort(this.currentPubkey); note.style.color = '#006600'; }
+      else { note.textContent = 'Install a Nostr extension (Alby, nos2x, etc.) or generate/import an identity to publish.'; note.style.color = '#800000'; }
+      if (!this.editingId && status && !status.textContent) status.textContent = '';
+    },
+
+    onCategoryChange() {
+      // no-op; payment fields removed
+    },
+
+    setupPostPreview() {
+      const imgInput = document.getElementById('pImage');
+      const fileInput = document.getElementById('pImageFile');
+      const preview = document.getElementById('postImagePreview');
+      const img = preview ? preview.querySelector('img') : null;
+      if (!preview || !img) return;
+      const show = (src) => { img.src = src; preview.style.display = 'block'; };
+      const hide = () => { preview.style.display = 'none'; img.src = ''; };
+      imgInput.addEventListener('input', () => { const val = imgInput.value.trim(); val ? show(val.split(',')[0].trim()) : hide(); });
+      fileInput.addEventListener('change', () => {
+        const files = Array.from(fileInput.files);
+        if (files.length > 0) {
+          const last = files[files.length - 1];
+          const reader = new FileReader(); reader.onload = e => show(e.target.result); reader.readAsDataURL(last);
+        } else { hide(); }
+      });
+    },
+
+    setupDraftWarning() {
+      const inputs = ['pTitle','pPrice','pLocation','pEmail','pImage','pDesc'];
+      let dirty = false;
+      const mark = () => { dirty = true; };
+      inputs.forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', mark); });
+      window.addEventListener('beforeunload', (e) => { if (dirty && this.currentView === 'post') { e.preventDefault(); e.returnValue = ''; } });
+    },
+
+    setupImageFallbacks() {
+      document.body.addEventListener('error', (e) => {
+        if (e.target.tagName === 'IMG') {
+          const container = e.target.closest('.card-img');
+          if (container && !container.querySelector('.no-img')) {
+            e.target.style.display = 'none';
+            const div = document.createElement('div');
+            div.className = 'no-img';
+            div.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+            div.innerHTML = '[ NO IMAGE ]';
+            container.appendChild(div);
+          }
+        }
+      }, true);
+    },
+
+    async nip98Auth(url, method) {
+      if (!this.currentPubkey) throw new Error('Login required');
+      const authEvent = await this.signEvent({ kind: 24242, created_at: Math.floor(Date.now() / 1000), tags: [['u', url], ['method', method]], content: '' });
+      return btoa(JSON.stringify(authEvent));
+    },
+
+    async uploadImage() {
+      const fileInput = document.getElementById('pImageFile');
+      const server = document.getElementById('blossomServer').value.trim() || 'https://nostr.build';
+      const files = Array.from(fileInput.files);
+      if (files.length === 0) return this.toast('Select a file first', 'error');
+      try {
+        const uploadUrl = `${server}/api/v2/upload`;
+        let headers = {};
+        try { const auth = await this.nip98Auth(uploadUrl, 'POST'); headers['Authorization'] = 'Nostr ' + auth; }
+        catch(e) { console.warn('NIP-98 auth failed, trying anonymous upload', e); }
+        const uploadedUrls = [];
+        for (const file of files) {
+          const form = new FormData(); form.append('file', file);
+          const res = await fetch(uploadUrl, { method: 'POST', headers, body: form });
+          if (!res.ok) throw new Error('Upload failed');
+          const json = await res.json();
+          const url = json.url || json.data?.url || json[0]?.url;
+          if (url) uploadedUrls.push(url);
+        }
+        if (uploadedUrls.length === 0) throw new Error('No URLs in response');
+        const existing = document.getElementById('pImage').value.trim();
+        document.getElementById('pImage').value = existing ? existing + ', ' + uploadedUrls.join(', ') : uploadedUrls.join(', ');
+        document.getElementById('pImage').dispatchEvent(new Event('input'));
+        this.toast(`Uploaded ${uploadedUrls.length} image(s)! URL filled.`, 'success');
+      } catch(e) { this.toast('Upload failed (CORS, auth, or server error). Paste a direct image URL instead.', 'error'); }
+    },
+
+    async signEvent(template) {
+      const generatedSk = localStorage.getItem('ys_generated_sk');
+      if (generatedSk) return NostrTools.finalizeEvent(template, hexToBytes(generatedSk));
+      if (!window.nostr) throw new Error('Nostr extension required');
+      return await window.nostr.signEvent(template);
+    },
+
+    async submitPost() {
+      if (this.isPublishing) return;
+      const status = document.getElementById('formStatus');
+      if (!this.currentPubkey) { this.toast('Install a Nostr extension or generate/import an identity to publish.', 'error'); return; }
+      const title = document.getElementById('pTitle').value.trim();
+      const price = parseInt(document.getElementById('pPrice').value) || 0;
+      const category = document.getElementById('pCategory').value;
+      const location = document.getElementById('pLocation').value.trim();
+      const email = document.getElementById('pEmail').value.trim();
+      const desc = document.getElementById('pDesc').value.trim();
+      const imageInput = document.getElementById('pImage').value.trim();
+      const images = imageInput ? imageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+      if (!title || !desc || !location) { this.toast('Please fill in Title, Location, and Description.', 'error'); return; }
+      if (price < 0) { this.toast('Price cannot be negative.', 'error'); return; }
+      if (this.containsBanned({content: desc, tags: [['title', title]]})) { this.toast('Listing contains disallowed content.', 'error'); return; }
+      const publishedAt = Math.floor(Date.now()/1000);
+
+      const buildAndPublish = async () => {
+        this.isPublishing = true;
+        const btn = document.getElementById('postSubmitBtn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<b>Publishing...</b>'; }
+        try {
+          status.textContent = 'Mining proof of work...';
+          let dTag;
+          if (this.editingId) { const oldEv = this.events.get(this.editingId); dTag = oldEv?.tags.find(t => t[0] === 'd')?.[1]; }
+          if (!dTag) dTag = Math.random().toString(36).slice(2) + Date.now().toString(36);
+          const tags = [
+            ['d', dTag], ['title', title], ['price', price.toString(), 'USD'], ['category', category], ['location', location],
+            ['published_at', publishedAt.toString()], ['t', 'yardsale'], ['t', category],
+            ...(email ? [['email', email]] : []), ...(images.map(url => ['image', url]))
+          ];
+          const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: publishedAt, tags, content: desc };
+          const mined = await this.runPow(tpl, this.powDifficulty, (nonce) => { status.textContent = `Mining proof of work... (${nonce})`; });
+          status.textContent = 'Signing...';
+          const signed = await this.signEvent(mined);
+          this.upsertEvent(signed); this.publishToRelays(signed);
+          const isEdit = !!this.editingId;
+          this.toast(isEdit ? 'Listing updated!' : 'Published!', 'success');
+          document.getElementById('pTitle').value = ''; document.getElementById('pPrice').value = '';
+          document.getElementById('pLocation').value = ''; document.getElementById('pEmail').value = '';
+          document.getElementById('pDesc').value = ''; document.getElementById('pImage').value = '';
+          document.getElementById('postImagePreview').style.display = 'none';
+          const previewImg = document.getElementById('postImagePreview')?.querySelector('img');
+          if (previewImg) previewImg.src = '';
+          this.goHome();
+        } catch(e) { status.textContent = 'Error: ' + e.message; status.style.color = '#800000'; }
+        finally { this.isPublishing = false; this.editingId = null; if (btn) { btn.disabled = false; btn.innerHTML = '<b>Submit</b>'; } }
+      };
+
+      await buildAndPublish();
+    },
+
+    async reportItem(id) {
+      const reason = prompt('Report reason: scam, illegal, spam, harassment, other');
+      if (!reason) return;
+      if (!this.currentPubkey) return this.toast('Login required', 'error');
+      const ev = this.events.get(id);
+      if (!ev) return;
+      const report = { kind: 1984, created_at: Math.floor(Date.now()/1000), tags: [['e', id, 'mod'], ['p', ev.pubkey, 'mod'], ['report_type', reason]], content: '', pubkey: this.currentPubkey };
+      try { const signed = await this.signEvent(report); this.publishToRelays(signed); this.toast('Report sent to relays.', 'success'); }
+      catch(e) { this.toast('Report failed: ' + e.message, 'error'); }
+    },
+
+    async featureItem(id) {
+      if (!BTCPAY_CONFIG.url) { this.toast('BTCPay Server is not configured by the site operator.', 'error'); return; }
+      const ev = this.events.get(id);
+      if (!ev) return;
+      this.awaitPayment(0.5, 'USD', `Feature listing ${id.slice(0,8)}`, async () => {
+        const newTags = ev.tags.filter(t => t[0] !== 'featured'); newTags.push(['featured', 'true']);
+        const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: Math.floor(Date.now()/1000), tags: newTags, content: ev.content };
+        const signed = await this.signEvent(tpl);
+        this.upsertEvent(signed); this.publishToRelays(signed); this.showDetail(signed.id);
+      });
+    },
+
+    async awaitPayment(amount, currency, memo, onPaid) {
+      const overlay = document.getElementById('btcpayOverlay');
+      const status = document.getElementById('btcpayStatus');
+      const linkBox = document.getElementById('btcpayLink');
+      overlay.style.display = 'flex'; status.textContent = 'Creating invoice via BTCPay...'; linkBox.innerHTML = '';
+      try {
+        const invoice = await this.createInvoice(amount, currency, memo);
+        const methods = await this.getPaymentMethods(invoice.id);
+        const ln = methods.find(m => m.paymentMethodId === 'BTC_LightningLike');
+        const lnurl = ln?.paymentLink || '';
+        status.innerHTML = `Invoice created. Please pay to complete.`;
+        linkBox.innerHTML = `<a href="${this.escape(invoice.checkoutLink)}" target="_blank" style="font-weight:bold;">Open BTCPay Checkout ↗</a>${lnurl ? `<br><a href="${this.escape(lnurl)}" style="font-size:12px;">${this.escape(lnurl)}</a>` : ''}`;
+        this.btcpayPoll = setInterval(async () => {
+          try {
+            const inv = await this.getInvoice(invoice.id);
+            if (inv.status === 'Settled' || inv.status === 'Paid') { clearInterval(this.btcpayPoll); this.btcpayPoll = null; this.closeBtcpay(); onPaid(); }
+            else if (inv.status === 'Expired' || inv.status === 'Invalid') { clearInterval(this.btcpayPoll); this.btcpayPoll = null; status.textContent = 'Invoice expired. Cancelled.'; status.style.color = '#800000'; }
+          } catch(e) {}
+        }, 5000);
+      } catch(e) { status.textContent = 'Failed to create invoice: ' + e.message; status.style.color = '#800000'; }
+    },
+
+    closeBtcpay() { if (this.btcpayPoll) { clearInterval(this.btcpayPoll); this.btcpayPoll = null; } document.getElementById('btcpayOverlay').style.display = 'none'; },
+
+    async createInvoice(amount, currency, memo) {
+      const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` },
+        body: JSON.stringify({ amount, currency, metadata: { orderId: memo }, checkout: { defaultPaymentMethod: 'BTC_LightningLike', expirationMinutes: 15 } })
+      });
+      if (!res.ok) throw new Error('BTCPay create invoice failed');
+      return await res.json();
+    },
+    async getInvoice(invoiceId) {
+      const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices/${invoiceId}`, { headers: { 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` } });
+      if (!res.ok) throw new Error('Failed to fetch invoice');
+      return await res.json();
+    },
+    async getPaymentMethods(invoiceId) {
+      const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices/${invoiceId}/payment-methods`, { headers: { 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` } });
+      if (!res.ok) return [];
+      return await res.json();
+    },
+
+    async deleteItem(id) {
+      if (!confirm('Delete this listing? This broadcasts a Nostr deletion event to all relays.')) return;
+      if (!this.currentPubkey) return this.toast('Login required', 'error');
+      const oldEv = this.events.get(id);
+      if (oldEv) {
+        const dTag = oldEv.tags.find(t => t[0] === 'd')?.[1] || '';
+        if (dTag && oldEv.kind >= 30000 && oldEv.kind < 40000) {
+          const paramKey = `${oldEv.kind}:${oldEv.pubkey}:${dTag}`;
+          if (this.paramIndex.get(paramKey) === id) this.paramIndex.delete(paramKey);
+        }
+      }
+      const ev = { kind: 5, created_at: Math.floor(Date.now()/1000), tags: [['e', id]], content: 'Deleted by author', pubkey: this.currentPubkey };
+      try { const signed = await this.signEvent(ev); this.publishToRelays(signed); this.events.delete(id); try { await db.events.delete(id); } catch(e) {} this.goHome(); }
+      catch(e) { this.toast('Delete failed: ' + e.message, 'error'); }
+    },
+
+    toggleBtc() {
+      this.btcMode = !this.btcMode;
+      const btn = document.getElementById('btcBtn');
+      btn.textContent = this.btcMode ? '₿: On' : '₿: Off';
+      btn.classList.toggle('btc-active', this.btcMode);
+      this.render();
+    },
+    toggleTheme() {
+      this.darkMode = !this.darkMode;
+      document.body.classList.toggle('dark-mode', this.darkMode);
+      const btn = document.getElementById('themeBtn');
+      btn.textContent = this.darkMode ? '☀ Light' : '🌙 Dark';
+      localStorage.setItem('yardsale_theme', this.darkMode ? 'dark' : 'light');
+    },
+    loadTheme() {
+      const saved = localStorage.getItem('yardsale_theme');
+      this.darkMode = saved === 'dark';
+      const temp = document.getElementById('temp-dark');
+      if (temp) temp.remove();
+      if (this.darkMode) document.body.classList.add('dark-mode');
+      else document.body.classList.remove('dark-mode');
+      const btn = document.getElementById('themeBtn');
+      if (btn) btn.textContent = this.darkMode ? '☀ Light' : '🌙 Dark';
+    },
+
+    formatPrice(usd) {
+      if (usd === 0) return 'FREE';
+      if (this.btcMode) { const sats = Math.round(usd * this.satsRate); return `⚡ ${sats.toLocaleString()} sats`; }
+      return `💵 ${usd.toLocaleString()}`;
+    },
+
+    async fetchBtcRate() {
+      const tryFetch = async (url, extract) => {
+        const res = await fetch(url);
+        const data = await res.json();
+        const val = extract(data);
+        if (val) this.satsRate = Math.round(100000000 / val);
+      };
+      try { await tryFetch('https://mempool.space/api/v1/prices', d => d.USD); }
+      catch(e) { try { await tryFetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', d => d.bitcoin.usd); } catch(e2) { console.error('BTC rate fetch failed, using fallback', e2); } }
+    },
+
+    scheduleRender() {
+      if (this.renderDebounce) clearTimeout(this.renderDebounce);
+      this.renderDebounce = setTimeout(() => {
+        this.renderDebounce = null;
+        if (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites' || this.currentView === 'seller') this.render();
+      }, 150);
+    },
+
+    doSearch() { this.currentView = 'browse'; this.currentPage = 1; this.updateBrowseHash(); this.render(); },
+
+    showMyListings() {
+      if (!this.currentPubkey) { this.toast('Login with Nostr or generate an identity first.', 'error'); return; }
+      if (this.currentView === 'my') { this.render(); return; }
+      this.currentCategory = 'all'; this.currentSeller = null;
+      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
+      this.currentView = 'my'; this.currentPage = 1; location.hash = '#/my'; this.render();
+    },
+    showFavorites() {
+      if (this.currentView === 'favorites') { this.render(); return; }
+      this.currentCategory = 'all'; this.currentSeller = null; this.currentView = 'favorites';
+      this.currentPage = 1; document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
+      location.hash = '#/favorites'; this.render();
+    },
+    showSeller(pubkey) {
+      if (this.currentView === 'seller' && this.currentSeller === pubkey) { this.render(); return; }
+      this.currentView = 'seller'; this.currentPage = 1; this.currentSeller = pubkey;
+      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
+      const catLi = document.querySelector(`#categoryList li[data-cat="all"]`);
+      if (catLi) catLi.classList.add('active');
+      this.currentCategory = 'all'; location.hash = '#/seller/' + pubkey; this.render();
+    },
+    setSort(mode) { this.sortMode = mode; this.currentPage = 1; this.render(); },
+
+    async nostrLogin() {
+      if (!window.nostr) { this.toast('No Nostr extension detected. Install nos2x, Alby, or Nostore.', 'error'); return; }
+      try {
+        const pubkey = await window.nostr.getPublicKey(); this.currentPubkey = pubkey;
+        localStorage.setItem('yardsale_npub', pubkey); this.renderIdentity();
+        if (this.currentView === 'post') this.updatePostNote();
+      } catch(e) { this.toast('Nostr login cancelled or failed.', 'error'); }
+    },
+    generateIdentity() {
+      const sk = NostrTools.generateSecretKey(); const pubkey = NostrTools.getPublicKey(sk); const skHex = bytesToHex(sk);
+      let nsec = ''; try { nsec = NostrTools.nip19.nsecEncode(sk); } catch(e) { nsec = skHex; }
+      alert('⚠️ WARNING: Your new identity has been generated locally in this browser.\n\nIf you clear browser data or lose your private key, this account is GONE FOREVER.\n\nYou MUST back up your nsec (private key) now.\n\nClick OK to view your nsec.');
+      const copy = confirm(`Your private key (nsec):\n\n${nsec}\n\nCopy to clipboard?`);
+      if (copy && navigator.clipboard) { navigator.clipboard.writeText(nsec).then(() => this.toast('Copied! Store it safely.', 'success')); }
+      else if (copy) { this.toast('Write this down manually and store it in a safe place.', 'info', 5000); }
+      localStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
+      this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
+    },
+    importIdentity() {
+      const val = document.getElementById('importKey').value.trim();
+      if (!val) return this.toast('Enter a private key', 'error');
+      try {
+        let sk;
+        if (val.startsWith('nsec')) { const decoded = NostrTools.nip19.decode(val); sk = decoded.data; }
+        else if (/^[0-9a-fA-F]{64}$/.test(val)) { sk = hexToBytes(val); }
+        else { throw new Error('Key must be nsec1... or 64-character hex'); }
+        const skHex = bytesToHex(sk); const pubkey = NostrTools.getPublicKey(sk);
+        localStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
+        this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
+        this.toast('Identity imported successfully.', 'success'); document.getElementById('importKey').value = '';
+      } catch(e) { this.toast('Invalid private key: ' + e.message, 'error'); }
+    },
+    nostrLogout() {
+      this.currentPubkey = null; localStorage.removeItem('yardsale_npub'); localStorage.removeItem('ys_generated_sk');
+      this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
+    },
+
+    renderIdentity() {
+      const loggedOut = document.getElementById('nostrLoggedOut');
+      const loggedIn = document.getElementById('nostrLoggedIn');
+      if (!loggedOut || !loggedIn) return;
+      if (this.currentPubkey) {
+        loggedOut.style.display = 'none';
+        loggedIn.style.display = 'block';
+        const npub = this.hexToNpub(this.currentPubkey);
+        const isGenerated = !!localStorage.getItem('ys_generated_sk');
+        const content = document.getElementById('loggedInContent');
+        if (content) {
+          content.innerHTML = `
+            <div style="font-size:11px;word-break:break-all;margin-bottom:4px;">
+              <b>Nostr:</b><br>
+              <span style="color:var(--link-blue);font-family:monospace;font-size:10px;">${this.escape(npub.slice(0,14))}...${this.escape(npub.slice(-6))}</span><br>
+              <small style="color:var(--meta-color)">${isGenerated?'[browser key]':'[extension]'}</small>
+            </div>
+            <button data-action="copy-npub" data-npub="${this.escape(npub)}" style="width:100%;margin-bottom:4px;">📋 Copy npub</button>
+            <button data-action="nostr-logout" style="width:100%;">Forget Identity</button>
+          `;
+        }
+      } else {
+        loggedOut.style.display = 'block';
+        loggedIn.style.display = 'none';
+      }
+    },
+
+    hexToNpub(hex) { try { return NostrTools.nip19.npubEncode(hex); } catch(e) { return hex; } },
+    npubShort(hex) { const npub = this.hexToNpub(hex); return npub.slice(0, 10) + '...' + npub.slice(-4); },
+    copyNpub(npub) {
+      if (navigator.clipboard) { navigator.clipboard.writeText(npub).then(() => this.toast('Copied to clipboard', 'success')); }
+      else { const ta = document.createElement('textarea'); ta.value = npub; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); this.toast('Copied to clipboard', 'success'); }
+    },
+
+    async exportData() {
+      let arr = []; try { arr = await db.events.where('kind').equals(30402).toArray(); } catch(e) {}
+      const blob = new Blob([JSON.stringify(arr, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url;
+      a.download = `yardsale_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(url);
+    },
+    async importData(input) {
+      const file = input.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          const valid = imported.filter(ev => NostrTools.validateEvent(ev) && NostrTools.verifyEvent(ev));
+          try { await db.events.bulkPut(valid); } catch(e) {}
+          valid.forEach(ev => this.upsertEvent(ev));
+          this.render(); this.toast(`Imported ${valid.length} verified events.`, 'success');
+        } catch(err) { this.toast('Import failed: ' + err.message, 'error'); }
+        input.value = '';
+      };
+      reader.readAsText(file);
+    },
+
+    registerSW() {
+      if (!('serviceWorker' in navigator)) return;
+      const code = `const CACHE='yardsale-v1';const URLS=['./'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('Offline'))));});`;
+      const blob = new Blob([code], {type: 'application/javascript'});
+      navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+    },
+
+    startSloganRotator() {
+      const slogans = ["Local classifieds powered by Nostr.","No cookies, no tracking, no Facebook.","Bitcoin is better money.","Stay humble, stack sats.","Capital is the root of all good."];
+      let idx = 0; const el = document.getElementById('footSlogan');
+      setInterval(() => { idx = (idx+1)%slogans.length; el.textContent = slogans[idx]; }, 5000);
+    },
+
+    toast(message, type='info', duration=3000) {
+      const c = document.getElementById('toastContainer'); if (!c) return;
+      const el = document.createElement('div'); el.className = `toast ${type}`; el.textContent = message; c.appendChild(el);
+      setTimeout(() => { el.style.transition = 'opacity 0.3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, duration);
+    },
+
+    timeAgo(ts) {
+      if (!ts) return '';
+      const seconds = Math.floor((Date.now() - ts * 1000) / 1000);
+      if (seconds < 60) return 'just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      if (days < 30) return `${days}d ago`;
+      return new Date(ts * 1000).toLocaleDateString();
+    },
+
+    shareListing(id) {
+      const url = location.origin + location.pathname + '#/listing/' + id;
+      if (navigator.clipboard) { navigator.clipboard.writeText(url).then(() => this.toast('Link copied to clipboard!', 'success')); }
+      else { this.toast(url, 'info', 5000); }
+    },
+
+    toggleFavorite(id) {
+      if (this.favorites.has(id)) { this.favorites.delete(id); this.toast('Removed from favorites', 'success'); }
+      else { this.favorites.add(id); this.toast('Saved to favorites', 'success'); }
+      this.saveFavorites();
+      if (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites') this.render();
+      if (this.currentView === 'detail') this.showDetail(id);
+    },
+
+    loadFavorites() { try { const raw = localStorage.getItem('yardsale_favorites'); if (raw) JSON.parse(raw).forEach(id => this.favorites.add(id)); } catch(e){} },
+    saveFavorites() { localStorage.setItem('yardsale_favorites', JSON.stringify([...this.favorites])); },
+
+    escape(text) {
+      text = text ?? '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    },
+
+    bindGlobalEvents() {
+      document.addEventListener('click', e => this.handleClick(e));
+      document.addEventListener('change', e => this.handleChange(e));
+    },
+    handleClick(e) {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action;
+      const id = el.dataset.id;
+      const pubkey = el.dataset.pubkey;
+      const npub = el.dataset.npub;
+      const url = el.dataset.url;
+      const page = el.dataset.page;
+      switch(action) {
+        case 'go-home': this.goHome(); break;
+        case 'toggle-post-form': this.togglePostForm(); break;
+        case 'do-search': this.doSearch(); break;
+        case 'toggle-btc': this.toggleBtc(); break;
+        case 'toggle-theme': this.toggleTheme(); break;
+        case 'show-messages': this.showMessages(); break;
+        case 'toggle-sidebar': this.toggleSidebar(); break;
+        case 'nostr-login': this.nostrLogin(); break;
+        case 'nostr-logout': this.nostrLogout(); break;
+        case 'copy-npub': this.copyNpub(npub); break;
+        case 'toggle-relay-expand': this.toggleRelayExpand(); break;
+        case 'show-my-listings': this.showMyListings(); break;
+        case 'show-favorites': this.showFavorites(); break;
+        case 'show-data-page': location.hash = '#/data'; break;
+        case 'view-listing': location.hash = '#/listing/' + id; break;
+        case 'toggle-fav': e.stopPropagation(); this.toggleFavorite(id); break;
+        case 'submit-post': this.submitPost(); break;
+        case 'cancel-post': this.togglePostForm(); break;
+        case 'upload-image': this.uploadImage(); break;
+        case 'feature-item': this.featureItem(id); break;
+        case 'edit-item': this.editItem(id); break;
+        case 'delete-item': this.deleteItem(id); break;
+        case 'report-item': this.reportItem(id); break;
+        case 'share-item': this.shareListing(id); break;
+        case 'submit-dm': this.submitDM(pubkey); break;
+        case 'toggle-composer': this.toggleComposer(); break;
+        case 'send-composed-dm': this.sendComposedDM(); break;
+        case 'export-data': this.exportData(); break;
+        case 'add-relay-from-input': this.addRelayFromInput(); break;
+        case 'fetch-nip65': this.fetchNip65(); break;
+        case 'close-btcpay': this.closeBtcpay(); break;
+        case 'add-relay': this.addRelay(url); break;
+        case 'reconnect-relay': this.reconnectRelay(url); break;
+        case 'remove-relay': this.removeRelay(url); break;
+        case 'go-to-page': this.goToPage(parseInt(page)); break;
+        case 'prev-page': this.prevPage(); break;
+        case 'next-page': this.nextPage(); break;
+        case 'generate-identity': this.generateIdentity(); break;
+        case 'import-identity': this.importIdentity(); break;
+      }
+    },
+    handleChange(e) {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const action = el.dataset.action;
+      switch(action) {
+        case 'category-change': this.onCategoryChange(); break;
+        case 'filter-change': this.currentPage = 1; this.render(); break;
+        case 'set-sort': this.setSort(el.value); break;
+        case 'set-page-size': this.setPageSize(el.value); break;
+        case 'import-data': this.importData(el); break;
+      }
+    }
+  };
+
+  window.app = app;
+  app.init();
+</script>
+
+</body>
+</html>

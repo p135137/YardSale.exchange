@@ -5,11 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#000080">
 <title>YardSale.exchange</title>
-<!--
-SECURITY NOTE: Before going live, replace the esm.sh imports below with
-self-hosted, version-pinned builds. The inline module script and dark-mode
-block will require 'unsafe-inline' in your CSP unless you externalize them.
--->
 <script>
 (function(){
   try {
@@ -52,7 +47,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     --no-img-color: #555555;
     --ad-bg: #ffffcc;
   }
-
   body.dark-mode {
     --body-bg: #1a1a1a;
     --bg-gray: #555555;
@@ -82,9 +76,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     --no-img-color: #aaaaaa;
     --ad-bg: #555533;
   }
-
   * { box-sizing: border-box; }
-  
   body {
     margin: 0;
     padding: 0;
@@ -93,7 +85,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     background: var(--body-bg);
     color: var(--text-color);
   }
-
   .desktop {
     max-width: 1400px;
     margin: 10px auto;
@@ -104,7 +95,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     transform: scale(0.95);
     transform-origin: top center;
   }
-
   .title-bar {
     background: linear-gradient(90deg, var(--title-start), var(--title-end));
     color: white;
@@ -135,7 +125,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     margin-left: 2px;
     cursor: default;
   }
-
   .toolbar {
     background: var(--win-gray);
     padding: 6px;
@@ -145,7 +134,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     align-items: center;
     flex-wrap: wrap;
   }
-
   button, select, input[type="text"], input[type="number"], input[type="file"], textarea {
     font-family: inherit;
     font-size: 12px;
@@ -170,12 +158,9 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     color: var(--input-text);
   }
   textarea { resize: vertical; }
-
   a { color: var(--link-blue); text-decoration: underline; }
   a:visited { color: var(--link-purple); }
-
   .layout { display: flex; min-height: 420px; }
-  
   .sidebar {
     width: 180px;
     background: var(--sidebar-bg);
@@ -219,7 +204,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
   }
   .sidebar li:hover { color: #ff0000; }
   .sidebar li.active { font-weight: bold; color: var(--text-color); text-decoration: none; }
-
   .ad {
     margin-top: 20px;
     border: 1px dashed var(--border-dark);
@@ -228,7 +212,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     font-size: 11px;
     background: var(--ad-bg);
   }
-
   .main {
     flex: 1;
     background: var(--main-bg);
@@ -236,7 +219,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     overflow-y: auto;
     position: relative;
   }
-
   .section-title {
     font-family: "Times New Roman", Times, serif;
     font-size: 24px;
@@ -244,7 +226,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     border-bottom: 2px solid var(--border-dark);
     padding-bottom: 4px;
   }
-
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -313,7 +294,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     margin-top: 4px;
   }
   .card-date { font-size: 10px; color: var(--date-color); }
-
   .tag {
     display: inline-block;
     background: #ff00ff;
@@ -333,7 +313,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     text-decoration: none;
     font-weight: bold;
   }
-
   .form-panel {
     background: var(--form-bg);
     border: 2px solid var(--border-dark);
@@ -353,7 +332,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     white-space: nowrap;
     text-align: right;
   }
-
   .detail-view {
     border: 2px solid var(--border-dark);
     padding: 20px;
@@ -373,7 +351,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     image-rendering: pixelated;
     background: var(--img-bg);
   }
-
   .footer {
     background: var(--footer-bg);
     border-top: 2px solid var(--btn-shadow);
@@ -397,14 +374,11 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     font-weight: bold;
   }
   @keyframes blink { 50% { opacity: 0; } }
-
   .btc-active {
     border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow) !important;
     background: var(--btn-active-bg) !important;
   }
-
   .hidden { display: none !important; }
-
   #syncBanner {
     background: var(--ad-bg);
     border-bottom: 1px solid var(--btn-shadow);
@@ -414,7 +388,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     align-items: center;
     gap: 6px;
   }
-
   #btcpayOverlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -432,7 +405,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     max-width: 420px;
     width: 90%;
   }
-
   .relay-table {
     width: 100%;
     border-collapse: collapse;
@@ -447,7 +419,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
   .relay-table th {
     background: var(--win-gray);
   }
-
   .toast {
     background: var(--bg-gray);
     border: 2px solid;
@@ -462,9 +433,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
   @keyframes toastIn { from { transform: translateX(20px); opacity:0; } to { transform: translateX(0); opacity:1; } }
   .toast.error { color: #800000; font-weight: bold; }
   .toast.success { color: #006600; font-weight: bold; }
-
   #toastContainer { position: fixed; top: 10px; right: 10px; z-index: 2000; max-width: 280px; pointer-events: none; }
-
   #mobileMenuBtn {
     display: none;
     background: transparent;
@@ -475,7 +444,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     cursor: pointer;
     margin-right: 6px;
   }
-
   @media (max-width: 640px) {
     .layout { flex-direction: column; }
     .sidebar { width: 100%; border-right: none; border-left: none; border-bottom: 2px solid var(--btn-shadow); padding: 8px; }
@@ -497,12 +465,9 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
 <div id="toastContainer"></div>
 
 <div class="desktop">
-
-  <!-- BETA BANNER -->
   <div style="background:#ff00ff;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:12px;">
     🚧 BETA — Local classifieds powered by Nostr. Use at your own risk. 🚧
   </div>
-
   <div class="title-bar">
     <div style="display:flex;align-items:center;">
       <button id="mobileMenuBtn" data-action="toggle-sidebar" aria-label="Menu">☰</button>
@@ -512,7 +477,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       <span aria-hidden="true">_</span><span aria-hidden="true">□</span><span aria-hidden="true">×</span>
     </div>
   </div>
-
   <div class="toolbar">
     <button data-action="go-home" aria-label="Home">🏠 Home</button>
     <button data-action="toggle-post-form" aria-label="Post new listing">📝 Post Item</button>
@@ -526,7 +490,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       <input type="text" id="locationFilter" placeholder="Any city" style="width:120px;" data-action="filter-change">
     </label>
   </div>
-
   <div class="layout">
     <aside class="sidebar sidebar-left">
       <h3>Categories</h3>
@@ -540,13 +503,11 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
         <li data-cat="community" data-action="set-category">community</li>
         <li data-cat="free stuff" data-action="set-category">free stuff</li>
       </ul>
-
       <h3>Price Filter</h3>
       <div style="display:flex;gap:4px;margin-bottom:16px;">
         <input type="number" id="minPrice" min="0" placeholder="Min" style="width:50%;" data-action="filter-change">
         <input type="number" id="maxPrice" min="0" placeholder="Max" style="width:50%;" data-action="filter-change">
       </div>
-
       <h3>Identity</h3>
       <div id="nostrIdentity" style="margin-bottom:16px;">
         <div id="nostrLoggedOut">
@@ -563,7 +524,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <div id="loggedInContent"></div>
         </div>
       </div>
-
       <h3>Relays</h3>
       <div id="relayStatus" style="font-size:11px;margin-bottom:4px;color:var(--meta-color);">0/0 connected</div>
       <div id="relayShortList" style="margin-bottom:4px;"></div>
@@ -571,7 +531,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       <div style="font-size:11px;margin-bottom:16px;">
         <a href="#/relays" style="color:var(--link-blue);">manage relays →</a>
       </div>
-
       <h3>My Zone</h3>
       <ul>
         <li data-action="show-my-listings">my listings</li>
@@ -579,12 +538,10 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
         <li data-action="show-data-page">my data</li>
       </ul>
     </aside>
-
     <main class="main" id="mainArea">
       <div id="syncBanner">
         <span class="blink">●</span> Syncing with Nostr relays...
       </div>
-
       <div id="browseView">
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--border-dark);padding-bottom:4px;margin-bottom:12px;">
           <div class="section-title" id="listTitle" style="border:none;margin:0;padding:0;">Recent Listings</div>
@@ -597,7 +554,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
         <div id="listingsGrid" class="grid"></div>
         <div id="paginationControls" style="margin-top:15px;"></div>
       </div>
-
       <div id="postForm" class="form-panel hidden">
         <h2>Post a New Listing</h2>
         <div id="nostrPostNote" style="font-size:12px;color:#800000;margin-bottom:8px;"></div>
@@ -633,9 +589,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           </td></tr>
         </table>
       </div>
-
       <div id="detailView" class="detail-view hidden"></div>
-
       <div id="relaysView" class="detail-view hidden">
         <h2>My Relays</h2>
         <p style="font-size:12px;">Manage your relay connections. Events are fetched from and published to all connected relays.</p>
@@ -659,17 +613,16 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="aboutView" class="detail-view hidden">
         <h2>About YardSale.exchange</h2>
         <div style="font-size:14px;line-height:1.6;max-width:700px;">
-          <p>Big platforms like Facebook and Zillow don't help communities thrive—they exploit them. Every listing, message, and profile view is logged, analyzed, and sold. You are not the customer; you are the product.<p>YardSale.exchange runs on a different premise: no cookies, no tracking pixels, no algorithmic feeds, and no corporate overlords monetizing your neighborhood. The site runs entirely in your browser, and your data belongs to you. Built on Nostr, no email required.<p>
+          <p>Big platforms like Facebook and Zillow don't help communities thrive—they exploit them. Every listing, message, and profile view is logged, analyzed, and sold. You are not the customer; you are the product.</p>
+          <p>YardSale.exchange runs on a different premise: no cookies, no tracking pixels, no algorithmic feeds, and no corporate overlords monetizing your neighborhood. The site runs entirely in your browser, and your data belongs to you. Built on Nostr, no email required.</p>
         </div>
         <div style="margin-top:20px;">
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="termsView" class="detail-view hidden">
         <h2>Terms and Conditions</h2>
         <div style="font-size:14px;line-height:1.6;max-width:700px;">
@@ -688,7 +641,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="safetyView" class="detail-view hidden">
         <h2>Safety Best Practices</h2>
         <div style="font-size:14px;line-height:1.6;max-width:700px;">
@@ -703,7 +655,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="dataView" class="detail-view hidden">
         <h2>My Data</h2>
         <p style="font-size:13px;">Export your local listings cache or import a previously exported backup.</p>
@@ -721,7 +672,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="messagesView" class="detail-view hidden">
         <h2>Messages</h2>
         <div style="margin-bottom:12px;">
@@ -746,7 +696,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
           <button data-action="go-home">← Back to listings</button>
         </div>
       </div>
-
       <div id="donateView" class="detail-view hidden">
         <h2>Donate</h2>
         <div style="font-size:14px;line-height:1.6;max-width:700px;">
@@ -759,7 +708,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
         </div>
       </div>
     </main>
-
     <aside class="sidebar sidebar-right">
       <div class="ad">
         <b>Your Ad Here!</b><br>
@@ -768,7 +716,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       </div>
     </aside>
   </div>
-
   <div class="footer">
     <div style="margin-bottom:6px;">
       You are visitor #<span class="counter" id="hitCounter">000001</span>
@@ -794,7 +741,6 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
   import Dexie from 'https://esm.sh/dexie@4.0.8';
 
   const BTCPAY_CONFIG = { url: '', storeId: '', apiKey: '' };
-
   const hexToBytes = hex => Uint8Array.from(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
   const bytesToHex = bytes => Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
 
@@ -857,10 +803,12 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       await this.loadCache(); await this.loadDMs();
       if (window.nostr && !this.currentPubkey && !localStorage.getItem('ys_generated_sk')) {
         try {
-          const pubkey = await window.nostr.getPublicKey();
-          this.currentPubkey = pubkey;
-          localStorage.setItem('yardsale_npub', pubkey);
-        } catch(e) {}
+          const pubkey = await Promise.race([
+            window.nostr.getPublicKey(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+          ]);
+          if (pubkey) { this.currentPubkey = pubkey; localStorage.setItem('yardsale_npub', pubkey); }
+        } catch(e) { /* silently skip auto-login */ }
       }
       this.fetchBtcRate(); this.connectAllRelays();
       this.setupPostPreview(); this.setupDraftWarning(); this.setupImageFallbacks();
@@ -1682,7 +1630,10 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
       const generatedSk = localStorage.getItem('ys_generated_sk');
       if (generatedSk) return NostrTools.finalizeEvent(template, hexToBytes(generatedSk));
       if (!window.nostr) throw new Error('Nostr extension required');
-      return await window.nostr.signEvent(template);
+      return await Promise.race([
+        window.nostr.signEvent(template),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Nostr extension signing timed out')), 15000))
+      ]);
     },
 
     async submitPost() {
@@ -1907,10 +1858,14 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     async nostrLogin() {
       if (!window.nostr) { this.toast('No Nostr extension detected. Install nos2x, Alby, or Nostore.', 'error'); return; }
       try {
-        const pubkey = await window.nostr.getPublicKey(); this.currentPubkey = pubkey;
+        const pubkey = await Promise.race([
+          window.nostr.getPublicKey(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Login prompt timed out')), 15000))
+        ]);
+        this.currentPubkey = pubkey;
         localStorage.setItem('yardsale_npub', pubkey); this.renderIdentity();
         if (this.currentView === 'post') this.updatePostNote();
-      } catch(e) { this.toast('Nostr login cancelled or failed.', 'error'); }
+      } catch(e) { this.toast('Nostr login cancelled or failed: ' + e.message, 'error'); }
     },
     generateIdentity() {
       const sk = NostrTools.generateSecretKey(); const pubkey = NostrTools.getPublicKey(sk); const skHex = bytesToHex(sk);
@@ -1969,7 +1924,7 @@ block will require 'unsafe-inline' in your CSP unless you externalize them.
     },
 
     hexToNpub(hex) { try { return NostrTools.nip19.npubEncode(hex); } catch(e) { return hex; } },
-    npubShort(hex) { const npub = this.hexToNpub(hex); return npub.slice(0, 10) + '...' + npub.slice(-4); },
+    npubShort(hex) { if (!hex) return 'unknown'; const npub = this.hexToNpub(hex); return npub.slice(0, 10) + '...' + npub.slice(-4); },
     copyNpub(npub) {
       if (navigator.clipboard) { navigator.clipboard.writeText(npub).then(() => this.toast('Copied to clipboard', 'success')); }
       else { const ta = document.createElement('textarea'); ta.value = npub; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); this.toast('Copied to clipboard', 'success'); }

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <meta name="theme-color" content="#000080">
 <title>YardSale.exchange</title>
 <script>
@@ -85,6 +85,7 @@
    background: var(--body-bg);
    color: var(--text-color);
  }
+ button { touch-action: manipulation; }
  .desktop {
    max-width: 1400px;
    margin: 10px auto;
@@ -427,7 +428,11 @@
    cursor: pointer;
    margin-right: 6px;
  }
+ .mobile-overlay { display: none; }
+ .mobile-nav { display: none; }
+
  @media (max-width: 640px) {
+   body { padding-bottom: 56px; }
    .layout { flex-direction: column; }
    .sidebar { width: 100%; border-right: none; border-left: none; border-bottom: 2px solid var(--btn-shadow); padding: 8px; }
    .sidebar.open { display: block; }
@@ -437,9 +442,61 @@
    .toolbar { gap: 4px; padding: 4px; }
    .desktop { margin: 0; border-left: none; border-right: none; border-top: none; transform: none; }
    .title-bar h1 { font-size: 16px; }
-   input[type="text"], input[type="number"], textarea, select { max-width: 100%; }
+   input[type="text"], input[type="number"], textarea, select { max-width: 100%; font-size: 16px; }
    .window-btns { display: none; }
    #mobileMenuBtn { display: inline-block; }
+
+   .sidebar-left {
+     position: fixed;
+     top: 0; left: 0; bottom: 0;
+     width: 260px;
+     transform: translateX(-100%);
+     transition: transform 0.25s ease;
+     z-index: 1500;
+     border-right: 2px solid var(--btn-shadow);
+     overflow-y: auto;
+     background: var(--sidebar-bg);
+   }
+   .sidebar-left.open { transform: translateX(0); }
+   .mobile-overlay.show { display: block; }
+   .mobile-overlay {
+     position: fixed;
+     inset: 0;
+     background: rgba(0,0,0,0.45);
+     z-index: 1400;
+   }
+   .mobile-nav {
+     position: fixed;
+     bottom: 0; left: 0; right: 0;
+     background: var(--bg-gray);
+     border-top: 2px solid var(--btn-highlight);
+     display: flex;
+     justify-content: space-around;
+     align-items: center;
+     padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
+     z-index: 1300;
+   }
+   .mobile-nav button {
+     background: transparent;
+     border: none;
+     font-size: 22px;
+     line-height: 1;
+     padding: 2px 16px;
+     color: var(--text-color);
+     flex: 1;
+     text-align: center;
+   }
+   .mobile-nav small {
+     font-size: 10px;
+     display: block;
+     margin-top: 2px;
+     font-family: "MS Sans Serif", Tahoma, Verdana, Arial, sans-serif;
+   }
+   .card { padding: 10px; }
+   #paginationControls button { padding: 8px 14px; font-size: 14px; }
+   .relay-table { display: block; overflow-x: auto; white-space: nowrap; }
+   .detail-img { max-height: 300px; }
+   #toastContainer { top: 10px; left: 10px; right: 10px; max-width: none; }
  }
 </style>
 </head>
@@ -709,6 +766,14 @@
  </div>
 </div>
 
+<div class="mobile-overlay" id="mobileOverlay" data-action="close-sidebar"></div>
+<nav class="mobile-nav">
+  <button data-action="go-home" aria-label="Home">🏠<br><small>Home</small></button>
+  <button data-action="toggle-post-form" aria-label="Post">📝<br><small>Post</small></button>
+  <button data-action="show-messages" aria-label="Messages">✉<br><small>Msgs</small></button>
+  <button data-action="toggle-sidebar" aria-label="Menu">☰<br><small>Menu</small></button>
+</nav>
+
 <script type="module">
  // SECURITY NOTE: For production, bundle dependencies or use a trusted CDN with Subresource Integrity (SRI).
  // Loading dynamic modules from esm.sh without integrity hashes exposes the app to supply-chain attacks.
@@ -777,7 +842,6 @@
      this.loadTheme(); this.loadRelays(); this.loadFavorites(); this.setupRouter();
      this.bindGlobalEvents();
      await this.loadCache(); await this.loadDMs();
-     // Restore generated session if present in this tab
      const savedSk = sessionStorage.getItem('ys_generated_sk');
      const savedPubkey = localStorage.getItem('yardsale_npub');
      if (savedSk && savedPubkey) {
@@ -1079,7 +1143,12 @@
      if (btn) btn.textContent = this.relayExpanded ? 'Show less' : 'Show all';
      this.renderRelayStatus();
    },
-   toggleSidebar() { document.querySelector('.sidebar-left').classList.toggle('open'); },
+   toggleSidebar() {
+     const sb = document.querySelector('.sidebar-left');
+     const overlay = document.getElementById('mobileOverlay');
+     sb.classList.toggle('open');
+     if (overlay) overlay.classList.toggle('show', sb.classList.contains('open'));
+   },
 
    parseEvent(ev) {
      const images = [];
@@ -1972,6 +2041,7 @@
        case 'toggle-theme': this.toggleTheme(); break;
        case 'show-messages': this.showMessages(); break;
        case 'toggle-sidebar': this.toggleSidebar(); break;
+       case 'close-sidebar': this.toggleSidebar(); break;
        case 'nostr-login': this.nostrLogin(); break;
        case 'nostr-logout': this.nostrLogout(); break;
        case 'copy-npub': this.copyNpub(npub); break;
@@ -1983,6 +2053,9 @@
          this.currentSeller = null;
          document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
          el.classList.add('active');
+         document.querySelector('.sidebar-left').classList.remove('open');
+         const overlay = document.getElementById('mobileOverlay');
+         if (overlay) overlay.classList.remove('show');
          document.querySelector('.sidebar-left').classList.remove('open');
          this.updateBrowseHash();
          this.render();

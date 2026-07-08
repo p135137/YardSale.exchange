@@ -468,7 +468,7 @@
 
 <div class="desktop">
  <div style="background:#ff00ff;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:12px;">
-   🚧 BETA — Use at your own risk. 🚧
+   🚧 BETA — Local classifieds powered by Nostr. Use at your own risk. 🚧
  </div>
  <div class="title-bar">
    <div style="display:flex;align-items:center;">
@@ -559,9 +559,9 @@
        <div id="nostrPostNote" style="font-size:12px;color:#800000;margin-bottom:8px;"></div>
        <div id="formStatus" style="font-size:12px;color:#006600;margin-bottom:8px;min-height:16px;"></div>
        <table class="form-table">
-         <tr><td>Title:</td><td><input type="text" id="pTitle" style="width:300px;" maxlength="60"></td></tr>
-         <tr><td>Price ($):</td><td><input type="number" id="pPrice" min="0" style="width:100px;" placeholder="0 for free"></td></tr>
-         <tr><td>Category:</td><td>
+         <tr><td>Title <span style="color:#ff0000;">*</span>:</td><td><input type="text" id="pTitle" style="width:300px;" maxlength="60"></td></tr>
+         <tr><td>Price ($) <span style="color:#ff0000;">*</span>:</td><td><input type="number" id="pPrice" min="0" style="width:100px;" placeholder="0 for free"></td></tr>
+         <tr><td>Category <span style="color:#ff0000;">*</span>:</td><td>
            <select id="pCategory" data-action="category-change">
              <option>for sale</option>
              <option>housing</option>
@@ -572,8 +572,8 @@
              <option>free stuff</option>
            </select>
          </td></tr>
-         <tr><td>Location:</td><td><input type="text" id="pLocation" style="width:200px;" placeholder="City, State"></td></tr>
-         <tr><td>Zip Code:</td><td><input type="text" id="pZip" style="width:100px;" placeholder="12345" maxlength="10"></td></tr>
+         <tr><td>Location <span style="color:#ff0000;">*</span>:</td><td><input type="text" id="pLocation" style="width:200px;" placeholder="City, State"></td></tr>
+         <tr><td>Zip Code <span style="color:#ff0000;">*</span>:</td><td><input type="text" id="pZip" style="width:100px;" placeholder="12345" maxlength="10"></td></tr>
          <tr><td>Email:</td><td><input type="text" id="pEmail" style="width:250px;" placeholder="optional contact email"></td></tr>
          <tr><td>Image URL:</td><td>
            <input type="text" id="pImage" style="width:220px;" placeholder="https://... (comma-separated for multiple)"> 
@@ -583,7 +583,7 @@
          </td></tr>
          <tr><td></td><td><div id="postImagePreview" style="margin-top:6px;max-width:200px;display:none;"><img style="max-width:100%;border:1px inset #808080;background:var(--img-bg);" src="" alt="Preview"></div></td></tr>
          <tr><td></td><td style="font-size:11px;">Server: <input type="text" id="blossomServer" value="https://nostr.build" style="width:150px;"></td></tr>
-         <tr><td>Description:</td><td><textarea id="pDesc" rows="5" style="width:100%;max-width:500px;"></textarea></td></tr>
+         <tr><td>Description <span style="color:#ff0000;">*</span>:</td><td><textarea id="pDesc" rows="5" style="width:100%;max-width:500px;"></textarea></td></tr>
          <tr><td></td><td>
            <button id="postSubmitBtn" data-action="submit-post"><b>Submit</b></button>
            <button data-action="cancel-post">Cancel</button>
@@ -1667,7 +1667,7 @@
      const status = document.getElementById('formStatus');
      if (!this.currentPubkey) { this.toast('Install a Nostr extension or generate/import an identity to publish.', 'error'); return; }
      const title = document.getElementById('pTitle').value.trim();
-     const price = parseInt(document.getElementById('pPrice').value) || 0;
+     const priceRaw = document.getElementById('pPrice').value.trim();
      const category = document.getElementById('pCategory').value;
      const location = document.getElementById('pLocation').value.trim();
      const zip = document.getElementById('pZip').value.trim();
@@ -1683,9 +1683,15 @@
        images = newImageInput ? newImageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
      }
      images = images.map(url => this.sanitizeUrl(url)).filter(Boolean);
-     if (!title || !desc || !location) { this.toast('Please fill in Title, Location, and Description.', 'error'); return; }
+
+     if (!title) { this.toast('Title is required.', 'error'); return; }
+     if (!priceRaw) { this.toast('Price is required.', 'error'); return; }
+     const price = parseInt(priceRaw);
+     if (isNaN(price) || price < 0) { this.toast('Price must be a valid number.', 'error'); return; }
+     if (!category) { this.toast('Category is required.', 'error'); return; }
+     if (!location) { this.toast('Location is required.', 'error'); return; }
      if (!zip) { this.toast('Zip code is required.', 'error'); return; }
-     if (price < 0) { this.toast('Price cannot be negative.', 'error'); return; }
+     if (!desc) { this.toast('Description is required.', 'error'); return; }
 
      let geo = null;
      try {

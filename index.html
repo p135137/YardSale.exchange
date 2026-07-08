@@ -502,11 +502,6 @@
        <li data-cat="community" data-action="set-category">community</li>
        <li data-cat="free stuff" data-action="set-category">free stuff</li>
      </ul>
-     <h3>Price Filter</h3>
-     <div style="display:flex;gap:4px;margin-bottom:16px;">
-       <input type="number" id="minPrice" min="0" placeholder="Min" style="width:50%;" data-action="filter-change">
-       <input type="number" id="maxPrice" min="0" placeholder="Max" style="width:50%;" data-action="filter-change">
-     </div>
      <h3>Miles from Location</h3>
      <div style="display:flex;gap:4px;margin-bottom:4px;">
        <input type="number" id="milesFilter" min="0" placeholder="Miles" style="width:50%;">
@@ -578,6 +573,7 @@
            </select>
          </td></tr>
          <tr><td>Location:</td><td><input type="text" id="pLocation" style="width:200px;" placeholder="City, State"></td></tr>
+         <tr><td>Zip Code:</td><td><input type="text" id="pZip" style="width:100px;" placeholder="12345" maxlength="10"></td></tr>
          <tr><td>Email:</td><td><input type="text" id="pEmail" style="width:250px;" placeholder="optional contact email"></td></tr>
          <tr><td>Image URL:</td><td>
            <input type="text" id="pImage" style="width:220px;" placeholder="https://... (comma-separated for multiple)"> 
@@ -734,6 +730,33 @@
  };
  const bytesToHex = bytes => Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
 
+ function haversine(lat1, lon1, lat2, lon2) {
+   const R = 3958.8;
+   const toRad = x => x * Math.PI / 180;
+   const dLat = toRad(lat2 - lat1);
+   const dLon = toRad(lon2 - lon1);
+   const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+             Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+             Math.sin(dLon / 2) * Math.sin(dLon / 2);
+   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+   return R * c;
+ }
+
+ async function geocodeZip(zip) {
+   try {
+     const res = await fetch(`https://api.zippopotam.us/us/${encodeURIComponent(zip)}`, { method: 'GET', mode: 'cors' });
+     if (!res.ok) return null;
+     const data = await res.json();
+     if (data.places && data.places[0]) {
+       return {
+         lat: parseFloat(data.places[0].latitude),
+         lon: parseFloat(data.places[0].longitude)
+       };
+     }
+   } catch (e) { console.warn('Geocoding failed', e); }
+   return null;
+ }
+
  const db = new Dexie('YardSaleDB');
  db.version(1).stores({ events: 'id, kind, pubkey, created_at', meta: 'key' });
  db.version(2).stores({ events: 'id, kind, pubkey, created_at', meta: 'key', dms: 'id, kind, pubkey, created_at' });
@@ -784,6 +807,7 @@
    relayExpanded: false, favorites: new Set(),
    sortMode: 'newest', currentSeller: null, editingId: null,
    initialLoad: true, dmCache: new Map(), newDmCount: 0,
+   userGeo: null,
 
    async init() {
      this.paramIndex = new Map();
@@ -1101,13 +1125,16 @@
 
    parseEvent(ev) {
      const images = [];
-     const item = { id: ev.id, pubkey: ev.pubkey, date: new Date(ev.created_at*1000).toLocaleString(), ts: ev.created_at, desc: ev.content||'', price: 0, featured: false, paymentOption:'', email:'', images:[], image:'', category:'', location:'' };
+     const item = { id: ev.id, pubkey: ev.pubkey, date: new Date(ev.created_at*1000).toLocaleString(), ts: ev.created_at, desc: ev.content||'', price: 0, featured: false, paymentOption:'', email:'', images:[], image:'', category:'', location:'', zip:'', lat:null, lon:null };
      for (const [k, ...rest] of ev.tags) {
        if (k==='title') item.title = rest[0];
        if (k==='price') item.price = parseInt(rest[0])||0;
        if (k==='category') item.category = rest[0];
        if (k==='location') item.location = rest[0];
        if (k==='email') item.email = rest[0];
+       if (k==='zip') item.zip = rest[0];
+       if (k==='latitude') item.lat = parseFloat(rest[0]);
+       if (k==='longitude') item.lon = parseFloat(rest[0]);
        if (k==='image' && rest[0]) {
          const clean = this.sanitizeUrl(rest[0]);
          if (clean) item.images.push(clean);
@@ -1121,23 +1148,27 @@
 
    getFilteredEvents() {
      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-     const minP = parseInt(document.getElementById('minPrice')?.value) || 0;
-     const maxP = parseInt(document.getElementById('maxPrice')?.value) || Infinity;
-     const zip = document.getElementById('zipFilter')?.value.trim().toLowerCase() || '';
-     // Note: true distance filtering requires a zip code geolocation database.
-     // Here we perform a basic text match on the listing's location field when a zip is provided.
      const items = [];
      this.events.forEach(ev => {
        if (ev.kind !== 30402) return;
        const item = this.parseEvent(ev);
        const matchesCat = this.currentCategory === 'all' || item.category === this.currentCategory;
-       const matchesLoc = !zip || (item.location || '').toLowerCase().includes(zip);
+       let matchesLoc = true;
+       if (this.userGeo) {
+         if (this.userGeo.exactZip) {
+           matchesLoc = (item.zip || '').toLowerCase() === this.userGeo.exactZip;
+         } else if (item.lat != null && item.lon != null) {
+           const d = haversine(this.userGeo.lat, this.userGeo.lon, item.lat, item.lon);
+           matchesLoc = d <= this.userGeo.miles;
+         } else {
+           matchesLoc = false;
+         }
+       }
        const matchesQ = !q || ((item.title||'').toLowerCase().includes(q)) || ((item.desc||'').toLowerCase().includes(q));
        const matchesUser = this.currentView !== 'my' || (this.currentPubkey && item.pubkey === this.currentPubkey);
        const matchesFav = this.currentView !== 'favorites' || this.favorites.has(item.id);
        const matchesSeller = !this.currentSeller || item.pubkey === this.currentSeller;
-       const matchesPrice = item.price >= minP && item.price <= maxP;
-       if (matchesCat && matchesLoc && matchesQ && matchesUser && matchesFav && matchesSeller && matchesPrice) items.push(item);
+       if (matchesCat && matchesLoc && matchesQ && matchesUser && matchesFav && matchesSeller) items.push(item);
      });
      items.sort((a,b) => {
        if (a.featured && !b.featured) return -1;
@@ -1234,7 +1265,7 @@
      const dmSection = this.currentPubkey ? `<div style="margin-top:20px;padding:15px;background:var(--form-bg);border:2px solid var(--border-dark);"><h3 style="margin-top:0;font-family:'Times New Roman', serif;">Send Nostr DM</h3><p style="font-size:11px;">Uses NIP-44 / NIP-04 encryption via your extension.</p><table class="form-table"><tr><td>Message:</td><td><textarea id="dmMessage" rows="3" style="width:100%;max-width:400px;"></textarea></td></tr><tr><td></td><td><button data-action="submit-dm" data-pubkey="${item.pubkey}">Send Encrypted DM</button></td></tr></table><div id="dmStatus" style="margin-top:8px;font-weight:bold;"></div></div>` : `<p style="margin-top:16px;font-size:12px;"><i>Login with Nostr to send an encrypted DM to this seller.</i></p>`;
      const reportBtn = this.currentPubkey ? `<button data-action="report-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Report</button>` : '';
      const detailView = document.getElementById('detailView');
-     detailView.innerHTML = `<h2>${this.escape(item.title||'Untitled')}</h2><div style="font-size:18px;color:#060;font-weight:bold;margin-bottom:10px;">${this.formatPrice(item.price||0)}</div>${paymentHtml}<div style="margin-bottom:12px;"><b>Location:</b> ${this.escape(item.location||'')} &nbsp;|&nbsp; <b>Category:</b> ${this.escape(item.category||'')} &nbsp;|&nbsp; <b>Posted:</b> <span title="${this.escape(item.date)}">${this.timeAgo(item.ts)}</span></div>${mainImg}${thumbs}<p style="font-size:14px;line-height:1.5;">${this.escape(item.desc).replace(/\n/g,'<br>')}</p>${emailHtml}<p><b>Seller:</b> <a href="#/seller/${item.pubkey}" style="font-family:monospace;font-size:12px;word-break:break-all;">${this.escape(npub)}</a> <button data-action="copy-npub" data-npub="${this.escape(npub)}" style="margin-left:6px;font-size:11px;">Copy</button></p><hr><button data-action="go-home">← Back to listings</button>${featureBtn}${isAuthor ? `<button data-action="edit-item" data-id="${item.id}" style="margin-left:10px;">✏️ Edit</button><button data-action="delete-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Delete Post</button>` : ''}${reportBtn}<button data-action="toggle-fav" data-id="${item.id}" style="margin-left:10px;">${isFav?'❤️ Saved':'🤍 Save'}</button><button data-action="share-item" data-id="${item.id}" style="margin-left:10px;">🔗 Copy Link</button>${dmSection}<div style="margin-top:24px;"><h3 style="font-family:'Times New Roman', serif;">Comments</h3><div id="commentsSection"><p style="font-size:12px;"><i>Loading comments...</i></p></div></div>`;
+     detailView.innerHTML = `<h2>${this.escape(item.title||'Untitled')}</h2><div style="font-size:18px;color:#060;font-weight:bold;margin-bottom:10px;">${this.formatPrice(item.price||0)}</div>${paymentHtml}<div style="margin-bottom:12px;"><b>Location:</b> ${this.escape(item.location||'')} &nbsp;|&nbsp; <b>Zip:</b> ${this.escape(item.zip||'N/A')} &nbsp;|&nbsp; <b>Category:</b> ${this.escape(item.category||'')} &nbsp;|&nbsp; <b>Posted:</b> <span title="${this.escape(item.date)}">${this.timeAgo(item.ts)}</span></div>${mainImg}${thumbs}<p style="font-size:14px;line-height:1.5;">${this.escape(item.desc).replace(/\n/g,'<br>')}</p>${emailHtml}<p><b>Seller:</b> <a href="#/seller/${item.pubkey}" style="font-family:monospace;font-size:12px;word-break:break-all;">${this.escape(npub)}</a> <button data-action="copy-npub" data-npub="${this.escape(npub)}" style="margin-left:6px;font-size:11px;">Copy</button></p><hr><button data-action="go-home">← Back to listings</button>${featureBtn}${isAuthor ? `<button data-action="edit-item" data-id="${item.id}" style="margin-left:10px;">✏️ Edit</button><button data-action="delete-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Delete Post</button>` : ''}${reportBtn}<button data-action="toggle-fav" data-id="${item.id}" style="margin-left:10px;">${isFav?'❤️ Saved':'🤍 Save'}</button><button data-action="share-item" data-id="${item.id}" style="margin-left:10px;">🔗 Copy Link</button>${dmSection}<div style="margin-top:24px;"><h3 style="font-family:'Times New Roman', serif;">Comments</h3><div id="commentsSection"><p style="font-size:12px;"><i>Loading comments...</i></p></div></div>`;
      detailView.querySelectorAll('.thumb-img').forEach(img => {
        img.addEventListener('click', () => {
          const main = document.querySelector('.detail-main-img');
@@ -1260,6 +1291,7 @@
      document.getElementById('pPrice').value = item.price || '';
      document.getElementById('pCategory').value = item.category || 'for sale';
      document.getElementById('pLocation').value = item.location || '';
+     document.getElementById('pZip').value = item.zip || '';
      document.getElementById('pEmail').value = item.email || '';
      document.getElementById('pImage').value = item.images.join(', ') || '';
      document.getElementById('pDesc').value = item.desc || '';
@@ -1514,7 +1546,7 @@
    },
 
    goHome(clearHash = true) {
-     this.editingId = null; this.currentSeller = null;
+     this.editingId = null; this.currentSeller = null; this.userGeo = null;
      this.currentCategory = 'all'; this.currentView = 'browse'; this.currentPage = 1;
      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
@@ -1530,7 +1562,8 @@
        this.editingId = null; this.hideAllViews(); form.classList.remove('hidden'); this.currentView = 'post';
        document.getElementById('pTitle').value = ''; document.getElementById('pPrice').value = '';
        document.getElementById('pCategory').value = 'for sale'; document.getElementById('pLocation').value = '';
-       document.getElementById('pEmail').value = ''; document.getElementById('pImage').value = '';
+       document.getElementById('pZip').value = ''; document.getElementById('pEmail').value = '';
+       document.getElementById('pImage').value = '';
        document.getElementById('pDesc').value = '';
        document.getElementById('postImagePreview').style.display = 'none';
        const previewImg = document.getElementById('postImagePreview')?.querySelector('img');
@@ -1572,7 +1605,7 @@
    },
 
    setupDraftWarning() {
-     const inputs = ['pTitle','pPrice','pLocation','pEmail','pImage','pDesc'];
+     const inputs = ['pTitle','pPrice','pLocation','pZip','pEmail','pImage','pDesc'];
      let dirty = false;
      const mark = () => { dirty = true; };
      inputs.forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener('input', mark); });
@@ -1637,6 +1670,7 @@
      const price = parseInt(document.getElementById('pPrice').value) || 0;
      const category = document.getElementById('pCategory').value;
      const location = document.getElementById('pLocation').value.trim();
+     const zip = document.getElementById('pZip').value.trim();
      const email = document.getElementById('pEmail').value.trim();
      const desc = document.getElementById('pDesc').value.trim();
      const imageInput = document.getElementById('pImage').value.trim();
@@ -1650,8 +1684,16 @@
      }
      images = images.map(url => this.sanitizeUrl(url)).filter(Boolean);
      if (!title || !desc || !location) { this.toast('Please fill in Title, Location, and Description.', 'error'); return; }
+     if (!zip) { this.toast('Zip code is required.', 'error'); return; }
      if (price < 0) { this.toast('Price cannot be negative.', 'error'); return; }
-     const publishedAt = Math.floor(Date.now()/1000);
+
+     let geo = null;
+     try {
+       status.textContent = 'Verifying zip code...';
+       geo = await geocodeZip(zip);
+     } catch(e) {}
+     if (!geo) { status.textContent = 'Could not verify zip code. Please check it and try again.'; status.style.color = '#800000'; return; }
+     status.textContent = '';
 
      const buildAndPublish = async () => {
        this.isPublishing = true;
@@ -1664,10 +1706,11 @@
          if (!dTag) dTag = Math.random().toString(36).slice(2) + Date.now().toString(36);
          const tags = [
            ['d', dTag], ['title', title], ['price', price.toString(), 'USD'], ['category', category], ['location', location],
-           ['published_at', publishedAt.toString()], ['t', 'yardsale'], ['t', category],
+           ['zip', zip], ['latitude', geo.lat.toString()], ['longitude', geo.lon.toString()],
+           ['published_at', Math.floor(Date.now()/1000).toString()], ['t', 'yardsale'], ['t', category],
            ...(email ? [['email', email]] : []), ...(images.map(url => ['image', url]))
          ];
-         const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: publishedAt, tags, content: desc };
+         const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: Math.floor(Date.now()/1000), tags, content: desc };
          let mined;
          if (this.powDifficulty <= 0) {
            mined = JSON.parse(JSON.stringify(tpl));
@@ -1683,8 +1726,9 @@
          const isEdit = !!this.editingId;
          this.toast(isEdit ? 'Listing updated!' : 'Published!', 'success');
          document.getElementById('pTitle').value = ''; document.getElementById('pPrice').value = '';
-         document.getElementById('pLocation').value = ''; document.getElementById('pEmail').value = '';
-         document.getElementById('pDesc').value = ''; document.getElementById('pImage').value = '';
+         document.getElementById('pLocation').value = ''; document.getElementById('pZip').value = '';
+         document.getElementById('pEmail').value = ''; document.getElementById('pImage').value = '';
+         document.getElementById('pDesc').value = '';
          document.getElementById('postImagePreview').style.display = 'none';
          const previewImg = document.getElementById('postImagePreview')?.querySelector('img');
          if (previewImg) previewImg.src = '';
@@ -1787,7 +1831,40 @@
      }, 150);
    },
 
-   doSearch() { this.currentView = 'browse'; this.currentPage = 1; this.updateBrowseHash(); this.render(); },
+   async doSearch() {
+     const fromZip = document.getElementById('zipFilter')?.value.trim() || '';
+     const miles = parseInt(document.getElementById('milesFilter')?.value) || 0;
+     if (fromZip && miles > 0) {
+       const cacheKey = 'ys_zipgeo_' + fromZip;
+       const cached = sessionStorage.getItem(cacheKey);
+       if (cached) {
+         this.userGeo = JSON.parse(cached);
+         this.userGeo.miles = miles;
+       } else {
+         try {
+           const geo = await geocodeZip(fromZip);
+           if (geo) {
+             sessionStorage.setItem(cacheKey, JSON.stringify(geo));
+             this.userGeo = { ...geo, miles };
+           } else {
+             this.userGeo = null;
+             this.toast('Could not locate that zip code.', 'error');
+           }
+         } catch(e) {
+           this.userGeo = null;
+           this.toast('Geocoding service unavailable.', 'error');
+         }
+       }
+     } else if (fromZip) {
+       this.userGeo = { exactZip: fromZip.toLowerCase() };
+     } else {
+       this.userGeo = null;
+     }
+     this.currentView = 'browse';
+     this.currentPage = 1;
+     this.updateBrowseHash();
+     this.render();
+   },
 
    showMyListings() {
      if (!this.currentPubkey) { this.toast('Login with Nostr or generate an identity first.', 'error'); return; }

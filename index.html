@@ -418,21 +418,10 @@
  .toast.error { color: #800000; font-weight: bold; }
  .toast.success { color: #006600; font-weight: bold; }
  #toastContainer { position: fixed; top: 10px; right: 10px; z-index: 2000; max-width: 280px; pointer-events: none; }
- #mobileMenuBtn {
-   display: none;
-   background: transparent;
-   border: 1px solid rgba(255,255,255,0.6);
-   color: #fff;
-   font-size: 13px;
-   padding: 1px 4px;
-   cursor: pointer;
-   margin-right: 6px;
- }
+ #mobileMenuBtn { display: none; }
  .mobile-overlay { display: none; }
- .mobile-nav { display: none; }
 
  @media (max-width: 640px) {
-   body { padding-bottom: 56px; }
    .layout { flex-direction: column; }
    .sidebar { width: 100%; border-right: none; border-left: none; border-bottom: 2px solid var(--btn-shadow); padding: 8px; }
    .sidebar.open { display: block; }
@@ -465,33 +454,6 @@
      background: rgba(0,0,0,0.45);
      z-index: 1400;
    }
-   .mobile-nav {
-     position: fixed;
-     bottom: 0; left: 0; right: 0;
-     background: var(--bg-gray);
-     border-top: 2px solid var(--btn-highlight);
-     display: flex;
-     justify-content: space-around;
-     align-items: center;
-     padding: 4px 0 calc(4px + env(safe-area-inset-bottom));
-     z-index: 1300;
-   }
-   .mobile-nav button {
-     background: transparent;
-     border: none;
-     font-size: 22px;
-     line-height: 1;
-     padding: 2px 16px;
-     color: var(--text-color);
-     flex: 1;
-     text-align: center;
-   }
-   .mobile-nav small {
-     font-size: 10px;
-     display: block;
-     margin-top: 2px;
-     font-family: "MS Sans Serif", Tahoma, Verdana, Arial, sans-serif;
-   }
    .card { padding: 10px; }
    #paginationControls button { padding: 8px 14px; font-size: 14px; }
    .relay-table { display: block; overflow-x: auto; white-space: nowrap; }
@@ -510,7 +472,6 @@
  </div>
  <div class="title-bar">
    <div style="display:flex;align-items:center;">
-     <button id="mobileMenuBtn" data-action="toggle-sidebar" aria-label="Menu">☰</button>
      <div>YardSale.exchange - Local classifieds powered by Nostr</div>
    </div>
    <div class="window-btns">
@@ -518,17 +479,15 @@
    </div>
  </div>
  <div class="toolbar">
+   <button id="mobileMenuBtn" data-action="toggle-sidebar" aria-label="Menu">☰</button>
    <button data-action="go-home" aria-label="Home">🏠 Home</button>
    <button data-action="toggle-post-form" aria-label="Post new listing">📝 Post Item</button>
-   <input type="text" id="searchInput" placeholder="Search listings..." style="width:180px;">
-   <button data-action="do-search" aria-label="Search">Search</button>
    <button id="btcBtn" data-action="toggle-btc" aria-label="Toggle Bitcoin pricing">₿: Off</button>
    <button id="themeBtn" data-action="toggle-theme" aria-label="Toggle dark mode">🌙 Dark</button>
-   <button data-action="show-messages" aria-label="Messages">✉ Messages</button>
+   <input type="text" id="searchInput" placeholder="Search listings..." style="width:180px;">
+   <button data-action="do-search" aria-label="Search">Search</button>
    <div style="flex:1"></div>
-   <label>Location:
-     <input type="text" id="locationFilter" placeholder="Any city" style="width:120px;" data-action="filter-change">
-   </label>
+   <button data-action="show-messages" aria-label="Messages">✉ Messages</button>
  </div>
  <div class="layout">
    <aside class="sidebar sidebar-left">
@@ -548,6 +507,12 @@
        <input type="number" id="minPrice" min="0" placeholder="Min" style="width:50%;" data-action="filter-change">
        <input type="number" id="maxPrice" min="0" placeholder="Max" style="width:50%;" data-action="filter-change">
      </div>
+     <h3>Miles from Location</h3>
+     <div style="display:flex;gap:4px;margin-bottom:4px;">
+       <input type="number" id="milesFilter" min="0" placeholder="Miles" style="width:50%;">
+       <input type="text" id="zipFilter" placeholder="From Zip" style="width:50%;">
+     </div>
+     <button data-action="do-search" style="width:100%;margin-bottom:16px;">Search Area</button>
      <h3>Identity</h3>
      <div id="nostrIdentity" style="margin-bottom:16px;">
        <div id="nostrLoggedOut">
@@ -736,17 +701,6 @@
          <button data-action="go-home">← Back to listings</button>
        </div>
      </div>
-     <div id="donateView" class="detail-view hidden">
-       <h2>Donate</h2>
-       <div style="font-size:14px;line-height:1.6;max-width:700px;">
-         <p>YardSale.exchange is free, open-source software. If you find it useful, consider supporting development.</p>
-         <p><b>Bitcoin Lightning:</b> <code>donate@yoursale.exchange</code> <i>(placeholder)</i></p>
-         <p><b>On-chain:</b> <code>bc1q...</code> <i>(placeholder)</i></p>
-       </div>
-       <div style="margin-top:20px;">
-         <button data-action="go-home">← Back to listings</button>
-       </div>
-     </div>
    </main>
    <aside class="sidebar sidebar-right">
      <div class="ad">
@@ -760,19 +714,13 @@
    <div style="margin-bottom:6px;">
      You are visitor #<span class="counter" id="hitCounter">000001</span>
      &nbsp;|&nbsp;
-     <a href="#/about">About</a> &bull; <a href="#/safety">Safety</a> &bull; <a href="#/terms">Terms</a> &bull; <a href="#/donate">Donate</a>
+     <a href="#/about">About</a> &bull; <a href="#/safety">Safety</a> &bull; <a href="#/terms">Terms</a>
    </div>
    <div>est. in 2026 YardSale.exchange. <span id="footSlogan">Local classifieds powered by Nostr.</span></div>
  </div>
 </div>
 
 <div class="mobile-overlay" id="mobileOverlay" data-action="close-sidebar"></div>
-<nav class="mobile-nav">
-  <button data-action="go-home" aria-label="Home">🏠<br><small>Home</small></button>
-  <button data-action="toggle-post-form" aria-label="Post">📝<br><small>Post</small></button>
-  <button data-action="show-messages" aria-label="Messages">✉<br><small>Msgs</small></button>
-  <button data-action="toggle-sidebar" aria-label="Menu">☰<br><small>Menu</small></button>
-</nav>
 
 <script type="module">
  // SECURITY NOTE: For production, bundle dependencies or use a trusted CDN with Subresource Integrity (SRI).
@@ -861,6 +809,7 @@
      this.startSloganRotator(); this.renderIdentity(); this.renderRelayStatus();
      this.updateCounter();
      document.getElementById('searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') this.doSearch(); });
+     document.getElementById('zipFilter')?.addEventListener('keydown', e => { if (e.key === 'Enter') this.doSearch(); });
      document.addEventListener('keydown', e => {
        if (e.key === '/' && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) {
          e.preventDefault();
@@ -1171,16 +1120,18 @@
    },
 
    getFilteredEvents() {
-     const loc = document.getElementById('locationFilter').value.trim().toLowerCase();
      const q = document.getElementById('searchInput').value.trim().toLowerCase();
      const minP = parseInt(document.getElementById('minPrice')?.value) || 0;
      const maxP = parseInt(document.getElementById('maxPrice')?.value) || Infinity;
+     const zip = document.getElementById('zipFilter')?.value.trim().toLowerCase() || '';
+     // Note: true distance filtering requires a zip code geolocation database.
+     // Here we perform a basic text match on the listing's location field when a zip is provided.
      const items = [];
      this.events.forEach(ev => {
        if (ev.kind !== 30402) return;
        const item = this.parseEvent(ev);
        const matchesCat = this.currentCategory === 'all' || item.category === this.currentCategory;
-       const matchesLoc = !loc || (item.location || '').toLowerCase().includes(loc);
+       const matchesLoc = !zip || (item.location || '').toLowerCase().includes(zip);
        const matchesQ = !q || ((item.title||'').toLowerCase().includes(q)) || ((item.desc||'').toLowerCase().includes(q));
        const matchesUser = this.currentView !== 'my' || (this.currentPubkey && item.pubkey === this.currentPubkey);
        const matchesFav = this.currentView !== 'favorites' || this.favorites.has(item.id);
@@ -1199,7 +1150,7 @@
    },
 
    hideAllViews() {
-     ['browseView','postForm','detailView','aboutView','termsView','safetyView','relaysView','dataView','messagesView','donateView'].forEach(id => {
+     ['browseView','postForm','detailView','aboutView','termsView','safetyView','relaysView','dataView','messagesView'].forEach(id => {
        const el = document.getElementById(id);
        if (el) el.classList.add('hidden');
      });
@@ -1338,7 +1289,6 @@
    showTerms() { this.currentView = 'terms'; this.hideAllViews(); document.getElementById('termsView').classList.remove('hidden'); },
    showSafety() { this.currentView = 'safety'; this.hideAllViews(); document.getElementById('safetyView').classList.remove('hidden'); },
    showData() { this.currentView = 'data'; this.hideAllViews(); document.getElementById('dataView').classList.remove('hidden'); },
-   showDonate() { this.currentView = 'donate'; this.hideAllViews(); document.getElementById('donateView').classList.remove('hidden'); },
    async showMessages() {
      if (!this.currentPubkey) { this.toast('Login with a Nostr extension to use messages.', 'error'); return; }
      this.currentView = 'messages'; this.hideAllViews(); document.getElementById('messagesView').classList.remove('hidden');
@@ -1505,7 +1455,6 @@
        else if (raw === '/relays') this.showRelays();
        else if (raw === '/data') this.showData();
        else if (raw === '/messages') this.showMessages();
-       else if (raw === '/donate') this.showDonate();
        else if (raw === '/my') this.showMyListings();
        else if (raw === '/favorites') this.showFavorites();
        else if (raw.startsWith('/seller/')) this.showSeller(raw.replace('/seller/', ''));
@@ -1544,7 +1493,7 @@
      const cat = params.get('cat') || 'all';
      this.currentCategory = this.validCategories.includes(cat) ? cat : 'all';
      document.getElementById('searchInput').value = params.get('q') || '';
-     document.getElementById('locationFilter').value = params.get('loc') || '';
+     document.getElementById('zipFilter').value = params.get('zip') || '';
      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
      const catLi = document.querySelector(`#categoryList li[data-cat="${CSS.escape(this.currentCategory)}"]`);
      if (catLi) catLi.classList.add('active');
@@ -1555,9 +1504,9 @@
    updateBrowseHash() {
      const params = new URLSearchParams();
      const q = document.getElementById('searchInput').value.trim();
-     const loc = document.getElementById('locationFilter').value.trim();
+     const zip = document.getElementById('zipFilter')?.value.trim() || '';
      if (q) params.set('q', q);
-     if (loc) params.set('loc', loc);
+     if (zip) params.set('zip', zip);
      if (this.currentCategory !== 'all') params.set('cat', this.currentCategory);
      if (this.currentPage > 1) params.set('p', this.currentPage);
      const hash = params.toString() ? '#/?' + params.toString() : '#/';
@@ -1570,7 +1519,7 @@
      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
      document.getElementById('searchInput').value = '';
-     document.getElementById('locationFilter').value = '';
+     document.getElementById('zipFilter').value = '';
      if (clearHash) { if (location.hash !== '#/') history.pushState(null, '', '#/'); }
      this.render();
    },
@@ -2056,7 +2005,6 @@
          document.querySelector('.sidebar-left').classList.remove('open');
          const overlay = document.getElementById('mobileOverlay');
          if (overlay) overlay.classList.remove('show');
-         document.querySelector('.sidebar-left').classList.remove('open');
          this.updateBrowseHash();
          this.render();
          break;

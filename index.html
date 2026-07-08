@@ -388,23 +388,6 @@
    align-items: center;
    gap: 6px;
  }
- #btcpayOverlay {
-   position: fixed;
-   top: 0; left: 0; right: 0; bottom: 0;
-   background: rgba(0,0,0,0.6);
-   z-index: 1000;
-   display: none;
-   align-items: center;
-   justify-content: center;
- }
- #btcpayBox {
-   background: var(--bg-gray);
-   border: 2px solid;
-   border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
-   padding: 20px;
-   max-width: 420px;
-   width: 90%;
- }
  .relay-table {
    width: 100%;
    border-collapse: collapse;
@@ -517,7 +500,7 @@
          <div style="font-size:10px;color:var(--meta-color);text-align:center;margin-bottom:4px;">— or —</div>
          <button data-action="generate-identity" style="width:100%;margin-bottom:4px;">⚡ Generate Identity</button>
          <div style="font-size:11px;text-align:center;">
-           <a href="https://nostr.org/" target="_blank">What is nostr?</a>
+           <a href="https://nostr.org/" target="_blank" rel="noopener noreferrer">What is nostr?</a>
          </div>
        </div>
        <div id="nostrLoggedIn" style="display:none;">
@@ -629,7 +612,7 @@
          <p><b>1. No Platform Liability</b><br>
          YardSale.exchange is a decentralized Nostr client. We do not host, control, moderate, or endorse any listings. All content is published by users directly to the Nostr relay network. We are not responsible for transactions, disputes, fraud, or interactions between users.</p>
          <p><b>2. Payments</b><br>
-         Bitcoin Lightning payments for featured listings and job, housing, or vehicle posts are processed via BTCPay Server. All sales are final and non-refundable. Users are solely responsible for compliance with local tax laws.</p>
+         All transactions are peer-to-peer. Users are solely responsible for compliance with local tax laws.</p>
          <p><b>3. Content</b><br>
          Users are solely responsible for ensuring their listings comply with all applicable local, state, and federal laws regarding the sale of goods, services, housing, and employment. Illegal items, scams, and harassment are not welcome; abuse may result in filtering by relay operators.</p>
          <p><b>4. Privacy</b><br>
@@ -712,7 +695,7 @@
      <div class="ad">
        <b>Your Ad Here!</b><br>
        <span class="blink">NEW!</span><br>
-       <a href="mailto:yardsaleexchange@proton.me">Email us</a>
+       <a href="mailto:ads@yardsale.exchange">Email us</a>
      </div>
    </aside>
  </div>
@@ -726,22 +709,16 @@
  </div>
 </div>
 
-<div id="btcpayOverlay">
- <div id="btcpayBox">
-   <h3 style="margin-top:0;font-family:'Times New Roman', serif;">Complete Payment</h3>
-   <div id="btcpayStatus" style="font-size:13px;margin-bottom:10px;">Creating invoice...</div>
-   <div id="btcpayLink" style="margin-bottom:10px;"></div>
-   <div id="btcpayQr" style="margin-bottom:10px;"></div>
-   <button data-action="close-btcpay">Cancel</button>
- </div>
-</div>
-
 <script type="module">
+ // SECURITY NOTE: For production, bundle dependencies or use a trusted CDN with Subresource Integrity (SRI).
+ // Loading dynamic modules from esm.sh without integrity hashes exposes the app to supply-chain attacks.
  import * as NostrTools from 'https://esm.sh/nostr-tools@2.7.1';
  import Dexie from 'https://esm.sh/dexie@4.0.8';
 
- const BTCPAY_CONFIG = { url: '', storeId: '', apiKey: '' };
- const hexToBytes = hex => Uint8Array.from(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+ const hexToBytes = hex => {
+   if (!hex || hex.length % 2 !== 0) throw new Error('Invalid hex string');
+   return Uint8Array.from(hex.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+ };
  const bytesToHex = bytes => Array.from(bytes).map(b => b.toString(16).padStart(2,'0')).join('');
 
  const db = new Dexie('YardSaleDB');
@@ -788,11 +765,10 @@
  const app = {
    relays: [], relayConns: {}, events: new Map(), dms: [],
    currentCategory: 'all', currentView: 'browse', btcMode: false, darkMode: false,
-   satsRate: 2500, currentPubkey: null, powDifficulty: 0, eoseCount: 0, btcpayPoll: null,
+   satsRate: 2500, currentPubkey: null, powDifficulty: 0, eoseCount: 0,
    validCategories: ['for sale','housing','jobs','vehicles','services','community','free stuff'],
    pageSize: 8, currentPage: 1, renderDebounce: null, isPublishing: false,
    relayExpanded: false, favorites: new Set(),
-   BANNED_WORDS: ['csam','cp','child porn','hitman','assassination','heroin','fentanyl','meth','cocaine delivery'],
    sortMode: 'newest', currentSeller: null, editingId: null,
    initialLoad: true, dmCache: new Map(), newDmCount: 0,
 
@@ -801,7 +777,13 @@
      this.loadTheme(); this.loadRelays(); this.loadFavorites(); this.setupRouter();
      this.bindGlobalEvents();
      await this.loadCache(); await this.loadDMs();
-     if (window.nostr && !this.currentPubkey && !localStorage.getItem('ys_generated_sk')) {
+     // Restore generated session if present in this tab
+     const savedSk = sessionStorage.getItem('ys_generated_sk');
+     const savedPubkey = localStorage.getItem('yardsale_npub');
+     if (savedSk && savedPubkey) {
+       this.currentPubkey = savedPubkey;
+     }
+     if (window.nostr && !this.currentPubkey && !sessionStorage.getItem('ys_generated_sk')) {
        try {
          const pubkey = await Promise.race([
            window.nostr.getPublicKey(),
@@ -851,7 +833,7 @@
    saveRelays() { localStorage.setItem('yardsale_relays', JSON.stringify(this.relays)); },
    connectAllRelays() {
      this.relays.forEach(url => { if (!this.relayConns[url]) this.relayConns[url] = new RelayConn(url, this); });
-     this.totalRelays = this.relays.length; this.eoseCount = 0; this.updateSyncBanner();
+     this.eoseCount = 0; this.updateSyncBanner();
    },
 
    async loadCache() {
@@ -874,15 +856,10 @@
      return hasTitle && hasPrice && hasLocation && hasValidCategory;
    },
 
-   containsBanned(ev) {
-     const text = ((ev.content || '') + ' ' + (ev.tags?.find(t=>t[0]==='title')?.[1]||'')).toLowerCase();
-     return this.BANNED_WORDS.some(w => text.includes(w));
-   },
-
    sanitizeUrl(url) {
      if (!url) return '';
      const trimmed = url.trim();
-     if (/^(https?|data):/i.test(trimmed)) return trimmed;
+     if (/^https?:\/\//i.test(trimmed)) return trimmed;
      return '';
    },
 
@@ -944,10 +921,13 @@
          };
        `;
        const blob = new Blob([code], { type: 'text/javascript' });
+       const blobUrl = URL.createObjectURL(blob);
        try {
-         worker = new Worker(URL.createObjectURL(blob), { type: 'module' });
+         worker = new Worker(blobUrl, { type: 'module' });
        } catch(e) {
+         settled = true;
          clearTimeout(timer);
+         URL.revokeObjectURL(blobUrl);
          reject(new Error('Failed to start PoW worker: ' + e.message));
          return;
        }
@@ -957,6 +937,7 @@
            settled = true;
            clearTimeout(timer);
            try { worker.terminate(); } catch(e) {}
+           URL.revokeObjectURL(blobUrl);
            reject(new Error('PoW worker error: ' + (err.message || 'unknown')));
          }
        };
@@ -968,6 +949,7 @@
              settled = true;
              clearTimeout(timer);
              try { worker.terminate(); } catch(e) {}
+             URL.revokeObjectURL(blobUrl);
              resolve(e.data.event);
            }
          }
@@ -976,6 +958,7 @@
              settled = true;
              clearTimeout(timer);
              try { worker.terminate(); } catch(e) {}
+             URL.revokeObjectURL(blobUrl);
              reject(new Error(e.data.message));
            }
          }
@@ -998,10 +981,10 @@
          if (!NostrTools.validateEvent(ev) || !NostrTools.verifyEvent(ev)) return;
          if (ev.kind === 30402) {
            if (!this.isYardSaleEvent(ev)) { console.log('Ignored external listing:', ev.id.slice(0,8)); return; }
-           if (this.containsBanned(ev)) { console.warn('Filtered banned content:', ev.id); return; }
            if (this.upsertEvent(ev) && (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites' || this.currentView === 'seller')) this.scheduleRender();
          } else if (ev.kind === 5) {
            const idsToDelete = ev.tags.filter(t => t[0] === 'e').map(t => t[1]);
+           const authorizedIds = [];
            idsToDelete.forEach(id => {
              const oldEv = this.events.get(id);
              if (oldEv && oldEv.pubkey !== ev.pubkey) {
@@ -1016,8 +999,9 @@
                }
                this.events.delete(id);
              }
+             authorizedIds.push(id);
            });
-           if (idsToDelete.length > 0) db.events.bulkDelete(idsToDelete).catch(() => {});
+           if (authorizedIds.length > 0) db.events.bulkDelete(authorizedIds).catch(() => {});
            if (this.currentView === 'browse' || this.currentView === 'my' || this.currentView === 'favorites' || this.currentView === 'seller') this.scheduleRender();
          } else if (ev.kind === 10002 && this.currentPubkey && ev.pubkey === this.currentPubkey) {
            this.suggestedRelays = ev.tags.filter(t => t[0] === 'r').map(t => t[1]);
@@ -1140,7 +1124,7 @@
        if (!a.featured && b.featured) return 1;
        if (this.sortMode === 'price-low') return a.price - b.price;
        if (this.sortMode === 'price-high') return b.price - a.price;
-       return new Date(b.date) - new Date(a.date);
+       return b.ts - a.ts;
      });
      return items;
    },
@@ -1346,7 +1330,7 @@
        const c = this.relayConns[url];
        const status = c ? c.status : 'disconnected';
        const color = status==='connected' ? '#060' : (status==='connecting' ? '#660' : '#800');
-       return `<tr><td style="font-family:monospace;font-size:11px;">${this.escape(url)}</td><td style="color:${color};font-weight:bold;">${status}</td><td>${c&&c.eose?'✓':'—'}</td><td><button data-action="reconnect-relay" data-url="${this.jsString(url)}" style="font-size:11px;">Reconnect</button><button data-action="remove-relay" data-url="${this.jsString(url)}" style="font-size:11px;color:#800;margin-left:4px;">Remove</button></td></tr>`;
+       return `<tr><td style="font-family:monospace;font-size:11px;">${this.escape(url)}</td><td style="color:${color};font-weight:bold;">${status}</td><td>${c&&c.eose?'✓':'—'}</td><td><button data-action="reconnect-relay" data-url="${this.escape(url)}" style="font-size:11px;">Reconnect</button><button data-action="remove-relay" data-url="${this.escape(url)}" style="font-size:11px;color:#800;margin-left:4px;">Remove</button></td></tr>`;
      }).join('');
    },
 
@@ -1384,7 +1368,7 @@
      sec.style.display = 'block';
      list.innerHTML = this.suggestedRelays.map(url => {
        const exists = this.relays.includes(url);
-       return `<li>${this.escape(url)} ${exists ? '<i>(already added)</i>' : `<button data-action="add-relay" data-url="${this.jsString(url)}" style="font-size:11px;">Add</button>`}</li>`;
+       return `<li>${this.escape(url)} ${exists ? '<i>(already added)</i>' : `<button data-action="add-relay" data-url="${this.escape(url)}" style="font-size:11px;">Add</button>`}</li>`;
      }).join('');
      document.getElementById('nip65Status').textContent = '';
    },
@@ -1400,7 +1384,7 @@
      const status = document.getElementById('dmStatus');
      if (!msg) return this.toast('Enter a message', 'error');
      if (!this.currentPubkey) return this.toast('Login first', 'error');
-     if (localStorage.getItem('ys_generated_sk')) { status.textContent = 'DMs require a Nostr extension (browser keys cannot encrypt).'; status.style.color = '#800000'; return; }
+     if (sessionStorage.getItem('ys_generated_sk')) { status.textContent = 'DMs require a Nostr extension (browser keys cannot encrypt).'; status.style.color = '#800000'; return; }
      try {
        const ciphertext = await this.encryptDM(recipientPubkey, msg);
        const ev = { kind: 4, created_at: Math.floor(Date.now()/1000), tags: [['p', recipientPubkey]], content: ciphertext, pubkey: this.currentPubkey };
@@ -1419,7 +1403,7 @@
      const status = document.getElementById('dmComposeStatus');
      if (!recipientInput || !text) { status.textContent = 'Fill in recipient and message.'; status.style.color='#800000'; return; }
      if (!this.currentPubkey) { status.textContent = 'Login first.'; status.style.color='#800000'; return; }
-     if (localStorage.getItem('ys_generated_sk')) { status.textContent = 'Generated identities cannot encrypt DMs without an extension.'; status.style.color = '#800000'; return; }
+     if (sessionStorage.getItem('ys_generated_sk')) { status.textContent = 'Generated identities cannot encrypt DMs without an extension.'; status.style.color = '#800000'; return; }
      let recipientPubkey;
      try {
        if (recipientInput.startsWith('npub')) {
@@ -1586,13 +1570,20 @@
    async uploadImage() {
      const fileInput = document.getElementById('pImageFile');
      const server = document.getElementById('blossomServer').value.trim() || 'https://nostr.build';
-     const files = Array.from(fileInput.files);
+     let files = Array.from(fileInput.files);
      if (files.length === 0) return this.toast('Select a file first', 'error');
+     if (files.length > 5) { this.toast('Maximum 5 files allowed. Only the first 5 will be uploaded.', 'error'); files = files.slice(0, 5); }
      try {
        const uploadUrl = `${server}/api/v2/upload`;
+       const KNOWN_BLOSSOM_SERVERS = ['https://nostr.build', 'https://blossom.primal.net', 'https://cdn.nostrcheck.com', 'https://void.cat'];
+       const isKnown = KNOWN_BLOSSOM_SERVERS.some(u => uploadUrl.startsWith(u));
        let headers = {};
-       try { const auth = await this.nip98Auth(uploadUrl, 'POST'); headers['Authorization'] = 'Nostr ' + auth; }
-       catch(e) { console.warn('NIP-98 auth failed, trying anonymous upload', e); }
+       if (isKnown) {
+         try { const auth = await this.nip98Auth(uploadUrl, 'POST'); headers['Authorization'] = 'Nostr ' + auth; }
+         catch(e) { console.warn('NIP-98 auth failed, trying anonymous upload', e); }
+       } else {
+         console.warn('Unknown blossom server, skipping NIP-98 auth to avoid leaking credentials.');
+       }
        const uploadedUrls = [];
        for (const file of files) {
          const form = new FormData(); form.append('file', file);
@@ -1611,7 +1602,7 @@
    },
 
    async signEvent(template) {
-     const generatedSk = localStorage.getItem('ys_generated_sk');
+     const generatedSk = sessionStorage.getItem('ys_generated_sk');
      if (generatedSk) return NostrTools.finalizeEvent(template, hexToBytes(generatedSk));
      if (!window.nostr) throw new Error('Nostr extension required');
      return await Promise.race([
@@ -1639,9 +1630,9 @@
        const newImageInput = document.getElementById('pImage').value.trim();
        images = newImageInput ? newImageInput.split(',').map(s => s.trim()).filter(Boolean) : [];
      }
+     images = images.map(url => this.sanitizeUrl(url)).filter(Boolean);
      if (!title || !desc || !location) { this.toast('Please fill in Title, Location, and Description.', 'error'); return; }
      if (price < 0) { this.toast('Price cannot be negative.', 'error'); return; }
-     if (this.containsBanned({content: desc, tags: [['title', title]]})) { this.toast('Listing contains disallowed content.', 'error'); return; }
      const publishedAt = Math.floor(Date.now()/1000);
 
      const buildAndPublish = async () => {
@@ -1699,58 +1690,16 @@
    },
 
    async featureItem(id) {
-     if (!BTCPAY_CONFIG.url) { this.toast('BTCPay Server is not configured by the site operator.', 'error'); return; }
      const ev = this.events.get(id);
      if (!ev) return;
-     this.awaitPayment(0.5, 'USD', `Feature listing ${id.slice(0,8)}`, async () => {
+     if (!confirm('Feature this listing? This will re-publish the listing with a featured tag to all relays.')) return;
+     try {
        const newTags = ev.tags.filter(t => t[0] !== 'featured'); newTags.push(['featured', 'true']);
        const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: Math.floor(Date.now()/1000), tags: newTags, content: ev.content };
        const signed = await this.signEvent(tpl);
        this.upsertEvent(signed); this.publishToRelays(signed); this.showDetail(signed.id);
-     });
-   },
-
-   async awaitPayment(amount, currency, memo, onPaid) {
-     const overlay = document.getElementById('btcpayOverlay');
-     const status = document.getElementById('btcpayStatus');
-     const linkBox = document.getElementById('btcpayLink');
-     overlay.style.display = 'flex'; status.textContent = 'Creating invoice via BTCPay...'; linkBox.innerHTML = '';
-     try {
-       const invoice = await this.createInvoice(amount, currency, memo);
-       const methods = await this.getPaymentMethods(invoice.id);
-       const ln = methods.find(m => m.paymentMethodId === 'BTC_LightningLike');
-       const lnurl = ln?.paymentLink || '';
-       status.innerHTML = `Invoice created. Please pay to complete.`;
-       linkBox.innerHTML = `<a href="${this.escape(invoice.checkoutLink)}" target="_blank" style="font-weight:bold;">Open BTCPay Checkout ↗</a>${lnurl ? `<br><a href="${this.escape(lnurl)}" style="font-size:12px;">${this.escape(lnurl)}</a>` : ''}`;
-       this.btcpayPoll = setInterval(async () => {
-         try {
-           const inv = await this.getInvoice(invoice.id);
-           if (inv.status === 'Settled' || inv.status === 'Paid') { clearInterval(this.btcpayPoll); this.btcpayPoll = null; this.closeBtcpay(); onPaid(); }
-           else if (inv.status === 'Expired' || inv.status === 'Invalid') { clearInterval(this.btcpayPoll); this.btcpayPoll = null; status.textContent = 'Invoice expired. Cancelled.'; status.style.color = '#800000'; }
-         } catch(e) {}
-       }, 5000);
-     } catch(e) { status.textContent = 'Failed to create invoice: ' + e.message; status.style.color = '#800000'; }
-   },
-
-   closeBtcpay() { if (this.btcpayPoll) { clearInterval(this.btcpayPoll); this.btcpayPoll = null; } document.getElementById('btcpayOverlay').style.display = 'none'; },
-
-   async createInvoice(amount, currency, memo) {
-     const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices`, {
-       method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` },
-       body: JSON.stringify({ amount, currency, metadata: { orderId: memo }, checkout: { defaultPaymentMethod: 'BTC_LightningLike', expirationMinutes: 15 } })
-     });
-     if (!res.ok) throw new Error('BTCPay create invoice failed');
-     return await res.json();
-   },
-   async getInvoice(invoiceId) {
-     const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices/${invoiceId}`, { headers: { 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` } });
-     if (!res.ok) throw new Error('Failed to fetch invoice');
-     return await res.json();
-   },
-   async getPaymentMethods(invoiceId) {
-     const res = await fetch(`${BTCPAY_CONFIG.url}/api/v1/stores/${BTCPAY_CONFIG.storeId}/invoices/${invoiceId}/payment-methods`, { headers: { 'Authorization': `token ${BTCPAY_CONFIG.apiKey}` } });
-     if (!res.ok) return [];
-     return await res.json();
+       this.toast('Listing featured!', 'success');
+     } catch(e) { this.toast('Failed to feature: ' + e.message, 'error'); }
    },
 
    async deleteItem(id) {
@@ -1866,7 +1815,7 @@
      const copy = confirm(`Your private key (nsec):\n\n${nsec}\n\nCopy to clipboard?`);
      if (copy && navigator.clipboard) { navigator.clipboard.writeText(nsec).then(() => this.toast('Copied! Store it safely.', 'success')); }
      else if (copy) { this.toast('Write this down manually and store it in a safe place.', 'info', 5000); }
-     localStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
+     sessionStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
      this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
    },
    importIdentity() {
@@ -1878,13 +1827,13 @@
        else if (/^[0-9a-fA-F]{64}$/.test(val)) { sk = hexToBytes(val); }
        else { throw new Error('Key must be nsec1... or 64-character hex'); }
        const skHex = bytesToHex(sk); const pubkey = NostrTools.getPublicKey(sk);
-       localStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
+       sessionStorage.setItem('ys_generated_sk', skHex); localStorage.setItem('yardsale_npub', pubkey); this.currentPubkey = pubkey;
        this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
        this.toast('Identity imported successfully.', 'success'); document.getElementById('importKey').value = '';
      } catch(e) { this.toast('Invalid private key: ' + e.message, 'error'); }
    },
    nostrLogout() {
-     this.currentPubkey = null; localStorage.removeItem('yardsale_npub'); localStorage.removeItem('ys_generated_sk');
+     this.currentPubkey = null; localStorage.removeItem('yardsale_npub'); sessionStorage.removeItem('ys_generated_sk');
      this.renderIdentity(); if (this.currentView === 'post') this.updatePostNote();
    },
 
@@ -1896,7 +1845,7 @@
        loggedOut.style.display = 'none';
        loggedIn.style.display = 'block';
        const npub = this.hexToNpub(this.currentPubkey);
-       const isGenerated = !!localStorage.getItem('ys_generated_sk');
+       const isGenerated = !!sessionStorage.getItem('ys_generated_sk');
        const content = document.getElementById('loggedInContent');
        if (content) {
          content.innerHTML = `
@@ -1947,9 +1896,10 @@
 
    registerSW() {
      if (!('serviceWorker' in navigator)) return;
-     const code = `const CACHE='yardsale-v1';const URLS=['./'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>e.waitUntil(clients.claim()));self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('Offline'))));});`;
+     const code = `const CACHE='yardsale-v2';const URLS=['./'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS)).then(()=>self.skipWaiting()));});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>clients.claim())));self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).catch(()=>new Response('Offline'))));});`;
      const blob = new Blob([code], {type: 'application/javascript'});
-     navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(()=>{});
+     const swUrl = URL.createObjectURL(blob);
+     navigator.serviceWorker.register(swUrl).then(() => URL.revokeObjectURL(swUrl)).catch(() => { URL.revokeObjectURL(swUrl); });
    },
 
    startSloganRotator() {
@@ -1998,7 +1948,7 @@
      text = text ?? '';
      const div = document.createElement('div');
      div.textContent = text;
-     return div.innerHTML;
+     return div.innerHTML.replace(/'/g, '&#39;');
    },
 
    bindGlobalEvents() {
@@ -2056,7 +2006,6 @@
        case 'export-data': this.exportData(); break;
        case 'add-relay-from-input': this.addRelayFromInput(); break;
        case 'fetch-nip65': this.fetchNip65(); break;
-       case 'close-btcpay': this.closeBtcpay(); break;
        case 'add-relay': this.addRelay(url); break;
        case 'reconnect-relay': this.reconnectRelay(url); break;
        case 'remove-relay': this.removeRelay(url); break;
@@ -2081,7 +2030,6 @@
    }
  };
 
- window.app = app;
  app.init();
 </script>
 

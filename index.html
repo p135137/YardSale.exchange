@@ -468,7 +468,7 @@
 
 <div class="desktop">
  <div style="background:#ff00ff;color:#fff;text-align:center;font-weight:bold;padding:4px;font-size:12px;">
-   🚧 BETA — Use at your own risk. 🚧
+   🚧 BETA — Local classifieds powered by Nostr. Use at your own risk. 🚧
  </div>
  <div class="title-bar">
    <div style="display:flex;align-items:center;">
@@ -481,13 +481,13 @@
  <div class="toolbar">
    <button id="mobileMenuBtn" data-action="toggle-sidebar" aria-label="Menu">☰</button>
    <button data-action="go-home" aria-label="Home">🏠 Home</button>
-   <button data-action="toggle-post-form" aria-label="Post new listing">📝 Post Item</button>
+   <button id="postBtn" data-action="toggle-post-form" aria-label="Post new listing">📝 Post Item</button>
    <button id="btcBtn" data-action="toggle-btc" aria-label="Toggle Bitcoin pricing">₿: Off</button>
    <button id="themeBtn" data-action="toggle-theme" aria-label="Toggle dark mode">🌙 Dark</button>
    <input type="text" id="searchInput" placeholder="Search listings..." style="width:180px;">
    <button data-action="do-search" aria-label="Search">Search</button>
    <div style="flex:1"></div>
-   <button data-action="show-messages" aria-label="Messages">✉ Messages</button>
+   <button id="messagesBtn" data-action="show-messages" aria-label="Messages">✉ Messages</button>
  </div>
  <div class="layout">
    <aside class="sidebar sidebar-left">
@@ -702,7 +702,7 @@
      <div class="ad">
        <b>Your Ad Here!</b><br>
        <span class="blink">NEW!</span><br>
-       <a href="mailto:hello@thinkmachine.studio">Email us</a>
+       <a href="mailto:thinkmachine.studio">Email us</a>
      </div>
    </aside>
  </div>
@@ -808,6 +808,8 @@
    sortMode: 'newest', currentSeller: null, editingId: null,
    initialLoad: true, dmCache: new Map(), newDmCount: 0,
    userGeo: null,
+   treasury: { lnaddr: 'indulgenceineffable333217@getalby.com', pubkey: null, amountSats: 21000 },
+   pendingFeatures: new Map(),
 
    async init() {
      this.paramIndex = new Map();
@@ -844,6 +846,23 @@
      this.registerSW();
      this.initialLoad = false;
      this.router();
+   },
+
+   updateToolbarButtons() {
+     const btcBtn = document.getElementById('btcBtn');
+     if (btcBtn) {
+       btcBtn.textContent = this.btcMode ? '₿: On' : '₿: Off';
+       btcBtn.classList.toggle('active', this.btcMode);
+     }
+     const themeBtn = document.getElementById('themeBtn');
+     if (themeBtn) {
+       themeBtn.textContent = this.darkMode ? '☀ Light' : '🌙 Dark';
+       themeBtn.classList.toggle('active', this.darkMode);
+     }
+     const postBtn = document.getElementById('postBtn');
+     if (postBtn) postBtn.classList.toggle('active', this.currentView === 'post');
+     const msgBtn = document.getElementById('messagesBtn');
+     if (msgBtn) msgBtn.classList.toggle('active', this.currentView === 'messages');
    },
 
    upsertEvent(ev) {
@@ -1043,6 +1062,13 @@
          } else if (ev.kind === 10002 && this.currentPubkey && ev.pubkey === this.currentPubkey) {
            this.suggestedRelays = ev.tags.filter(t => t[0] === 'r').map(t => t[1]);
            if (this.currentView === 'relays') this.renderNip65();
+         } else if (ev.kind === 9735) {
+           const eTag = ev.tags.find(t => t[0] === 'e')?.[1];
+           const pTag = ev.tags.find(t => t[0] === 'p')?.[1];
+           if (eTag && this.pendingFeatures.has(eTag)) {
+             if (this.treasury.pubkey && pTag !== this.treasury.pubkey) return;
+             this.finalizeFeature(eTag);
+           }
          } else if (ev.kind === 4) {
            if (ev.pubkey === this.currentPubkey || ev.tags.some(t => t[0]==='p' && t[1]===this.currentPubkey)) {
              if (!this.dms.find(d => d.id === ev.id)) {
@@ -1261,7 +1287,7 @@
      const npub = this.hexToNpub(item.pubkey);
      const isAuthor = this.currentPubkey && item.pubkey === this.currentPubkey;
      const isFav = this.favorites.has(item.id);
-     const featureBtn = isAuthor && !item.featured ? `<button data-action="feature-item" data-id="${item.id}" style="color:#ff00ff;font-weight:bold;">⚡ Feature this post</button>` : (item.featured ? '<button disabled style="color:#666;">✓ Featured</button>' : '');
+     const featureBtn = isAuthor && !item.featured ? `<button data-action="feature-item" data-id="${item.id}" style="color:#ff00ff;font-weight:bold;">⚡ Feature (${this.treasury.amountSats.toLocaleString()} sats)</button>` : (item.featured ? '<button disabled style="color:#666;">✓ Featured</button>' : '');
      const dmSection = this.currentPubkey ? `<div style="margin-top:20px;padding:15px;background:var(--form-bg);border:2px solid var(--border-dark);"><h3 style="margin-top:0;font-family:'Times New Roman', serif;">Send Nostr DM</h3><p style="font-size:11px;">Uses NIP-44 / NIP-04 encryption via your extension.</p><table class="form-table"><tr><td>Message:</td><td><textarea id="dmMessage" rows="3" style="width:100%;max-width:400px;"></textarea></td></tr><tr><td></td><td><button data-action="submit-dm" data-pubkey="${item.pubkey}">Send Encrypted DM</button></td></tr></table><div id="dmStatus" style="margin-top:8px;font-weight:bold;"></div></div>` : `<p style="margin-top:16px;font-size:12px;"><i>Login with Nostr to send an encrypted DM to this seller.</i></p>`;
      const reportBtn = this.currentPubkey ? `<button data-action="report-item" data-id="${item.id}" style="color:#800000;margin-left:10px;">Report</button>` : '';
      const detailView = document.getElementById('detailView');
@@ -1277,6 +1303,7 @@
        mainImgEl.addEventListener('error', () => { mainImgEl.style.display = 'none'; }, { once: true });
      }
      this.fetchComments(id);
+     this.updateToolbarButtons();
    },
 
    editItem(id) {
@@ -1316,15 +1343,16 @@
      el.innerHTML = relevant.map(ev => `<div style="margin:6px 0;padding:8px;background:var(--card-bg);border:1px solid var(--btn-shadow);font-size:12px;"><div style="font-size:10px;color:var(--date-color);">${this.npubShort(ev.pubkey)} • ${this.timeAgo(ev.created_at)}</div><div style="margin-top:4px;">${this.escape(ev.content)}</div></div>`).join('');
    },
 
-   showRelays() { this.currentView = 'relays'; this.hideAllViews(); document.getElementById('relaysView').classList.remove('hidden'); this.renderRelayTable(); if (this.suggestedRelays) this.renderNip65(); },
-   showAbout() { this.currentView = 'about'; this.hideAllViews(); document.getElementById('aboutView').classList.remove('hidden'); },
-   showTerms() { this.currentView = 'terms'; this.hideAllViews(); document.getElementById('termsView').classList.remove('hidden'); },
-   showSafety() { this.currentView = 'safety'; this.hideAllViews(); document.getElementById('safetyView').classList.remove('hidden'); },
-   showData() { this.currentView = 'data'; this.hideAllViews(); document.getElementById('dataView').classList.remove('hidden'); },
+   showRelays() { this.currentView = 'relays'; this.hideAllViews(); document.getElementById('relaysView').classList.remove('hidden'); this.renderRelayTable(); if (this.suggestedRelays) this.renderNip65(); this.updateToolbarButtons(); },
+   showAbout() { this.currentView = 'about'; this.hideAllViews(); document.getElementById('aboutView').classList.remove('hidden'); this.updateToolbarButtons(); },
+   showTerms() { this.currentView = 'terms'; this.hideAllViews(); document.getElementById('termsView').classList.remove('hidden'); this.updateToolbarButtons(); },
+   showSafety() { this.currentView = 'safety'; this.hideAllViews(); document.getElementById('safetyView').classList.remove('hidden'); this.updateToolbarButtons(); },
+   showData() { this.currentView = 'data'; this.hideAllViews(); document.getElementById('dataView').classList.remove('hidden'); this.updateToolbarButtons(); },
    async showMessages() {
      if (!this.currentPubkey) { this.toast('Login with a Nostr extension to use messages.', 'error'); return; }
      this.currentView = 'messages'; this.hideAllViews(); document.getElementById('messagesView').classList.remove('hidden');
      document.getElementById('dmInbox').innerHTML = '<p>Loading messages from relays...</p>'; this.fetchDMs();
+     this.updateToolbarButtons();
    },
    toggleComposer() { const panel = document.getElementById('composerPanel'); if (panel) panel.classList.toggle('hidden'); },
 
@@ -1554,6 +1582,7 @@
      document.getElementById('zipFilter').value = '';
      if (clearHash) { if (location.hash !== '#/') history.pushState(null, '', '#/'); }
      this.render();
+     this.updateToolbarButtons();
    },
 
    togglePostForm() {
@@ -1571,6 +1600,7 @@
        this.updatePostNote();
        const status = document.getElementById('formStatus');
        if (status) { status.textContent = ''; status.style.color = '#006600'; }
+       this.updateToolbarButtons();
      } else { this.editingId = null; this.goHome(); }
    },
 
@@ -1760,14 +1790,124 @@
    async featureItem(id) {
      const ev = this.events.get(id);
      if (!ev) return;
-     if (!confirm('Feature this listing? This will re-publish the listing with a featured tag to all relays.')) return;
+     if (!this.currentPubkey) return this.toast('Login required', 'error');
+     const item = this.parseEvent(ev);
+     if (item.featured) return;
+     this.toast('Preparing Lightning invoice...', 'info');
      try {
-       const newTags = ev.tags.filter(t => t[0] !== 'featured'); newTags.push(['featured', 'true']);
-       const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: Math.floor(Date.now()/1000), tags: newTags, content: ev.content };
-       const signed = await this.signEvent(tpl);
-       this.upsertEvent(signed); this.publishToRelays(signed); this.showDetail(signed.id);
+       const lnurlData = await this.resolveLightningAddress(this.treasury.lnaddr);
+       if (lnurlData.nostrPubkey) this.treasury.pubkey = lnurlData.nostrPubkey;
+       const zapRequest = {
+         kind: 9734,
+         created_at: Math.floor(Date.now()/1000),
+         pubkey: this.currentPubkey,
+         tags: [
+           ['p', this.treasury.pubkey || this.currentPubkey],
+           ['e', id],
+           ['relays', ...this.relays.slice(0, 5)],
+           ['amount', (this.treasury.amountSats * 1000).toString()],
+         ],
+         content: 'Feature listing on YardSale.exchange'
+       };
+       const signedReq = await this.signEvent(zapRequest);
+       const inv = await this.fetchInvoice(lnurlData, this.treasury.amountSats, signedReq);
+       this.showFeaturePaymentUI(id, inv.pr);
+     } catch(e) {
+       console.warn('LNURL/Zap failed, falling back to manual address', e);
+       this.showFeaturePaymentUI(id, null);
+     }
+     this.awaitZapReceipt(id);
+   },
+
+   async resolveLightningAddress(lnaddr) {
+     const [user, domain] = lnaddr.split('@');
+     if (!user || !domain) throw new Error('Invalid lightning address');
+     const url = `https://${domain}/.well-known/lnurlp/${encodeURIComponent(user)}`;
+     const res = await fetch(url);
+     if (!res.ok) throw new Error('Failed to resolve lightning address');
+     const data = await res.json();
+     if (data.status === 'ERROR') throw new Error(data.reason || 'LNURL error');
+     return data;
+   },
+
+   async fetchInvoice(lnurlData, amountSats, zapRequestEvent) {
+     const msats = amountSats * 1000;
+     if (msats < lnurlData.minSendable || msats > lnurlData.maxSendable) {
+       throw new Error(`Amount must be between ${Math.ceil(lnurlData.minSendable/1000)} and ${Math.floor(lnurlData.maxSendable/1000)} sats`);
+     }
+     let callback = lnurlData.callback;
+     const sep = callback.includes('?') ? '&' : '?';
+     callback += `${sep}amount=${msats}`;
+     if (zapRequestEvent && lnurlData.allowsNostr) {
+       callback += `&nostr=${encodeURIComponent(JSON.stringify(zapRequestEvent))}`;
+     }
+     const res = await fetch(callback);
+     const data = await res.json();
+     if (data.status === 'ERROR') throw new Error(data.reason);
+     return data;
+   },
+
+   showFeaturePaymentUI(id, bolt11) {
+     const detailView = document.getElementById('detailView');
+     const existing = document.getElementById('featurePayPanel');
+     if (existing) existing.remove();
+     const panel = document.createElement('div');
+     panel.id = 'featurePayPanel';
+     panel.style = 'margin-top:16px;padding:12px;background:var(--form-bg);border:2px solid var(--border-dark);';
+     panel.innerHTML = `
+       <h3 style="margin-top:0;font-family:'Times New Roman', serif;">Feature Listing</h3>
+       <p>Send <b>${this.treasury.amountSats.toLocaleString()} sats</b> to:</p>
+       <code style="background:var(--input-bg);padding:4px;display:block;word-break:break-all;margin:8px 0;border:1px inset var(--btn-shadow);">${this.escape(this.treasury.lnaddr)}</code>
+       ${bolt11 ? `
+         <p style="font-size:12px;">Invoice:</p>
+         <code style="background:var(--input-bg);padding:4px;display:block;word-break:break-all;margin:8px 0;font-size:11px;border:1px inset var(--btn-shadow);">${this.escape(bolt11)}</code>
+         <button data-action="copy-bolt11" data-bolt11="${this.escape(bolt11)}" style="margin-bottom:8px;">📋 Copy Invoice</button>
+       ` : '<p style="font-size:12px;color:var(--meta-color);">Could not auto-generate invoice. Please pay manually to the address above.</p>'}
+       <div style="font-size:11px;color:var(--meta-color);margin-bottom:8px;">
+         <span class="blink">●</span> Waiting for zap receipt on relays...
+       </div>
+       <div style="display:flex;gap:8px;">
+         <button data-action="verify-zap" data-id="${id}">Verify Payment</button>
+         <button data-action="cancel-feature">Cancel</button>
+       </div>
+     `;
+     detailView.appendChild(panel);
+     panel.scrollIntoView({behavior: 'smooth'});
+   },
+
+   awaitZapReceipt(id) {
+     if (this.pendingFeatures.has(id)) return;
+     const subId = 'zap_wait_' + id;
+     const filter = { kinds: [9735], '#e': [id] };
+     Object.values(this.relayConns).forEach(c => c.req(subId, filter, true));
+     const timer = setTimeout(() => {
+       this.pendingFeatures.delete(id);
+       const panel = document.getElementById('featurePayPanel');
+       if (panel) panel.innerHTML = `<p style="color:#800000;">Timed out waiting for receipt. If you already paid, click Verify Payment.</p><div style="display:flex;gap:8px;"><button data-action="verify-zap" data-id="${id}">Verify Payment</button><button data-action="cancel-feature">Cancel</button></div>`;
+       this.toast('Zap receipt not found yet.', 'error');
+     }, 120000);
+     this.pendingFeatures.set(id, { timer, subId });
+   },
+
+   finalizeFeature(id) {
+     const pending = this.pendingFeatures.get(id);
+     if (pending) {
+       clearTimeout(pending.timer);
+       Object.values(this.relayConns).forEach(c => c.closeSub(pending.subId));
+       this.pendingFeatures.delete(id);
+     }
+     document.getElementById('featurePayPanel')?.remove();
+     const ev = this.events.get(id);
+     if (!ev) return;
+     const newTags = ev.tags.filter(t => t[0] !== 'featured');
+     newTags.push(['featured', 'true']);
+     const tpl = { kind: 30402, pubkey: this.currentPubkey, created_at: Math.floor(Date.now()/1000), tags: newTags, content: ev.content };
+     this.signEvent(tpl).then(signed => {
+       this.upsertEvent(signed);
+       this.publishToRelays(signed);
+       if (this.currentView === 'detail') this.showDetail(signed.id);
        this.toast('Listing featured!', 'success');
-     } catch(e) { this.toast('Failed to feature: ' + e.message, 'error'); }
+     }).catch(e => this.toast('Failed to feature: ' + e.message, 'error'));
    },
 
    async deleteItem(id) {
@@ -1789,17 +1929,14 @@
 
    toggleBtc() {
      this.btcMode = !this.btcMode;
-     const btn = document.getElementById('btcBtn');
-     btn.textContent = this.btcMode ? '₿: On' : '₿: Off';
-     btn.classList.toggle('btc-active', this.btcMode);
      this.render();
+     this.updateToolbarButtons();
    },
    toggleTheme() {
      this.darkMode = !this.darkMode;
      document.body.classList.toggle('dark-mode', this.darkMode);
-     const btn = document.getElementById('themeBtn');
-     btn.textContent = this.darkMode ? '☀ Light' : '🌙 Dark';
      localStorage.setItem('yardsale_theme', this.darkMode ? 'dark' : 'light');
+     this.updateToolbarButtons();
    },
    loadTheme() {
      const saved = localStorage.getItem('yardsale_theme');
@@ -1808,8 +1945,7 @@
      if (temp) temp.remove();
      if (this.darkMode) document.body.classList.add('dark-mode');
      else document.body.classList.remove('dark-mode');
-     const btn = document.getElementById('themeBtn');
-     if (btn) btn.textContent = this.darkMode ? '☀ Light' : '🌙 Dark';
+     this.updateToolbarButtons();
    },
 
    formatPrice(usd) {
@@ -1879,6 +2015,7 @@
      document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
      this.currentView = 'my'; this.currentPage = 1; location.hash = '#/my'; this.render();
+     this.updateToolbarButtons();
    },
    showFavorites() {
      if (this.currentView === 'favorites') { this.render(); return; }
@@ -1886,6 +2023,7 @@
      this.currentPage = 1; document.querySelectorAll('#categoryList li').forEach(l => l.classList.remove('active'));
      document.querySelector('#categoryList li[data-cat="all"]').classList.add('active');
      location.hash = '#/favorites'; this.render();
+     this.updateToolbarButtons();
    },
    showSeller(pubkey) {
      if (this.currentView === 'seller' && this.currentSeller === pubkey) { this.render(); return; }
@@ -1894,6 +2032,7 @@
      const catLi = document.querySelector(`#categoryList li[data-cat="all"]`);
      if (catLi) catLi.classList.add('active');
      this.currentCategory = 'all'; location.hash = '#/seller/' + pubkey; this.render();
+     this.updateToolbarButtons();
    },
    setSort(mode) { this.sortMode = mode; this.currentPage = 1; this.render(); },
 
@@ -2118,6 +2257,34 @@
        case 'next-page': this.nextPage(); break;
        case 'generate-identity': this.generateIdentity(); break;
        case 'import-identity': this.importIdentity(); break;
+       case 'cancel-feature':
+         this.pendingFeatures.forEach((v) => { clearTimeout(v.timer); Object.values(this.relayConns).forEach(c => c.closeSub(v.subId)); });
+         this.pendingFeatures.clear();
+         document.getElementById('featurePayPanel')?.remove();
+         break;
+       case 'verify-zap': {
+         const fid = el.dataset.id;
+         if (fid) {
+           let found = false;
+           this.events.forEach(ev => {
+             if (ev.kind === 9735) {
+               const eTag = ev.tags.find(t => t[0] === 'e')?.[1];
+               const pTag = ev.tags.find(t => t[0] === 'p')?.[1];
+               if (eTag === fid && (!this.treasury.pubkey || pTag === this.treasury.pubkey)) {
+                 found = true;
+                 this.finalizeFeature(fid);
+               }
+             }
+           });
+           if (!found) this.toast('No zap receipt found yet. Make sure you paid the invoice.', 'info');
+         }
+         break;
+       }
+       case 'copy-bolt11': {
+         const b11 = el.dataset.bolt11;
+         if (b11 && navigator.clipboard) { navigator.clipboard.writeText(b11).then(() => this.toast('Invoice copied!', 'success')); }
+         break;
+       }
      }
    },
    handleChange(e) {

@@ -873,6 +873,11 @@
      this.registerSW();
      this.initialLoad = false;
      this.router();
+
+     if (location.protocol === 'file:') {
+       this.toast('Running from a local file. Image upload and Lightning invoices may fail due to browser CORS restrictions. Use a local server for best results.', 'error', 8000);
+       console.warn('YardSale is running from file://. Many features require an http:// or https:// origin. Run: npx serve -s . -l 3000');
+     }
    },
 
    updateToolbarButtons() {
@@ -1538,15 +1543,14 @@
        setMeta('og:image', item.image || '');
        setMeta('og:type', 'product');
        setMeta('twitter:card', 'summary_large_image');
-       document.title = `${safeTitle} - YardSale.exchange`;
      } else {
        setMeta('og:title', 'YardSale.exchange - Local classifieds powered by Nostr');
        setMeta('og:description', 'No cookies, no tracking. Buy, sell, and trade locally on Nostr.');
        setMeta('og:image', '');
        setMeta('og:type', 'website');
        setMeta('twitter:card', 'summary');
-       document.title = 'YardSale.exchange';
      }
+     document.title = 'YardSale.exchange';
    },
 
    applyBrowseParams(params) {
@@ -1681,7 +1685,14 @@
        document.getElementById('pImage').value = existing ? existing + ', ' + uploadedUrls.join(', ') : uploadedUrls.join(', ');
        document.getElementById('pImage').dispatchEvent(new Event('input'));
        this.toast(`Uploaded ${uploadedUrls.length} image(s)! URL filled.`, 'success');
-     } catch(e) { this.toast('Upload failed (CORS, auth, or server error). Paste a direct image URL instead.', 'error'); }
+     } catch(e) {
+       console.error('Upload error:', e);
+       if (location.protocol === 'file:') {
+         this.toast('Upload blocked: browsers prevent file:// pages from calling image hosts. Run a local server or paste an image URL.', 'error', 6000);
+       } else {
+         this.toast('Upload failed (server or auth error). Paste a direct image URL instead.', 'error');
+       }
+     }
    },
 
    async signEvent(template) {
@@ -1823,7 +1834,11 @@
        }
      } catch(e) {
        console.error('Invoice generation failed:', e);
-       this.toast('Failed to reach Lightning server.', 'error');
+       if (location.protocol === 'file:') {
+         this.toast('Invoice API blocked: file:// pages cannot fetch Lightning invoices. Run a local server or pay manually.', 'error', 6000);
+       } else {
+         this.toast('Failed to reach Lightning server.', 'error');
+       }
      }
      if (bolt11) {
        this.showFeaturePaymentUI(id, bolt11);
